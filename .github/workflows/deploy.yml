@@ -35,15 +35,14 @@ jobs:
 
       - name: Deploy
         run: |
-          ssh root@109.199.106.147 << ENDSSH
+          ssh root@109.199.106.147 << 'ENDSSH'
             set -e
             cd /opt/affiliate-castle
             git pull origin main
             docker compose build app
-            docker compose run --rm -T app npx prisma migrate deploy
             docker compose up -d app
             docker image prune -f
-            echo "Deploy complete at \$(date)"
+            echo "Deploy complete at $(date)"
           ENDSSH
 
       - name: Health check

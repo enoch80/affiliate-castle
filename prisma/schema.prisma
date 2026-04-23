@@ -1,0 +1,258 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Offer {
+  id                  String    @id @default(cuid())
+  hoplink             String
+  resolvedUrl         String?
+  productName         String?
+  niche               String?
+  pricePoint          Float?
+  commissionPct       Float?
+  commissionFixed     Float?
+  network             String?
+  landingPageHtml     String?
+  landingPageScreenshot String?
+  status              String    @default("pending")
+  createdAt           DateTime  @default(now())
+  campaigns           Campaign[]
+  marketResearch      MarketResearch?
+  keywordResearch     KeywordResearch[]
+}
+
+model MarketResearch {
+  id                  String    @id @default(cuid())
+  offerId             String    @unique
+  offer               Offer     @relation(fields: [offerId], references: [id])
+  targetAudience      Json?
+  painPoints          Json?
+  benefits            Json?
+  trustSignals        Json?
+  competitorUrls      Json?
+  createdAt           DateTime  @default(now())
+}
+
+model KeywordResearch {
+  id                  String    @id @default(cuid())
+  offerId             String
+  offer               Offer     @relation(fields: [offerId], references: [id])
+  primaryKeyword      String
+  secondaryKeywords   Json?
+  serpTop10           Json?
+  semanticGap         Json?
+  avgWordCount        Int?
+  targetWordCount     Int?
+  createdAt           DateTime  @default(now())
+}
+
+model Campaign {
+  id              String    @id @default(cuid())
+  offerId         String
+  offer           Offer     @relation(fields: [offerId], references: [id])
+  name            String
+  angle           String?
+  status          String    @default("draft")
+  totalClicks     Int       @default(0)
+  totalConversions Int      @default(0)
+  totalRevenue    Float     @default(0)
+  createdAt       DateTime  @default(now())
+  contentPieces   ContentPiece[]
+  bridgePages     BridgePage[]
+  trackingLinks   TrackingLink[]
+  telegramPosts   TelegramPost[]
+  emailSequences  EmailSequence[]
+  publishJobs     PublishJob[]
+  leadMagnets     LeadMagnet[]
+  dailyAnalytics  DailyAnalytic[]
+}
+
+model ContentPiece {
+  id              String    @id @default(cuid())
+  campaignId      String
+  campaign        Campaign  @relation(fields: [campaignId], references: [id])
+  type            String
+  contentText     String?
+  contentHtml     String?
+  detectionScore  Float?
+  serpBriefJson   Json?
+  status          String    @default("generating")
+  platformPublishId String?
+  platformPublishUrl String?
+  createdAt       DateTime  @default(now())
+}
+
+model LeadMagnet {
+  id              String    @id @default(cuid())
+  campaignId      String
+  campaign        Campaign  @relation(fields: [campaignId], references: [id])
+  title           String
+  type            String
+  contentHtml     String?
+  pdfPath         String?
+  downloadCount   Int       @default(0)
+  createdAt       DateTime  @default(now())
+}
+
+model BridgePage {
+  id              String    @id @default(cuid())
+  campaignId      String
+  campaign        Campaign  @relation(fields: [campaignId], references: [id])
+  slug            String    @unique
+  templateId      String
+  contentJson     Json?
+  leadMagnetId    String?
+  optInEnabled    Boolean   @default(true)
+  views           Int       @default(0)
+  optIns          Int       @default(0)
+  publishedAt     DateTime?
+  createdAt       DateTime  @default(now())
+}
+
+model TrackingLink {
+  id              String    @id @default(cuid())
+  campaignId      String
+  campaign        Campaign  @relation(fields: [campaignId], references: [id])
+  shortCode       String    @unique
+  destinationUrl  String
+  platformSource  String?
+  clicks          Int       @default(0)
+  uniqueClicks    Int       @default(0)
+  createdAt       DateTime  @default(now())
+  clickEvents     ClickEvent[]
+  conversions     Conversion[]
+}
+
+model ClickEvent {
+  id              String    @id @default(cuid())
+  trackingLinkId  String
+  trackingLink    TrackingLink @relation(fields: [trackingLinkId], references: [id])
+  ipHash          String
+  userAgent       String?
+  referrer        String?
+  utmSource       String?
+  utmMedium       String?
+  countryCode     String?
+  deviceType      String?
+  timeOfDayBucket String?
+  clickedAt       DateTime  @default(now())
+}
+
+model Conversion {
+  id                  String    @id @default(cuid())
+  trackingLinkId      String
+  trackingLink        TrackingLink @relation(fields: [trackingLinkId], references: [id])
+  campaignId          String
+  revenue             Float
+  networkTransactionId String?  @unique
+  postbackRaw         Json?
+  convertedAt         DateTime  @default(now())
+}
+
+model EmailSubscriber {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  firstName       String?
+  nicheTag        String?
+  sourceCampaignId String?
+  listmonkId      Int?
+  status          String    @default("active")
+  subscribedAt    DateTime  @default(now())
+  unsubscribedAt  DateTime?
+}
+
+model EmailSequence {
+  id              String    @id @default(cuid())
+  campaignId      String
+  campaign        Campaign  @relation(fields: [campaignId], references: [id])
+  name            String
+  steps           EmailSequenceStep[]
+}
+
+model EmailSequenceStep {
+  id              String    @id @default(cuid())
+  sequenceId      String
+  sequence        EmailSequence @relation(fields: [sequenceId], references: [id])
+  stepNumber      Int
+  delayDays       Int
+  subject         String
+  previewText     String?
+  bodyHtml        String?
+  sentCount       Int       @default(0)
+  openCount       Int       @default(0)
+  clickCount      Int       @default(0)
+}
+
+model TelegramChannel {
+  id              String    @id @default(cuid())
+  botTokenEncrypted String
+  channelUsername String
+  channelId       String?
+  displayName     String
+  subscriberCount Int       @default(0)
+  lastSyncedAt    DateTime?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  posts           TelegramPost[]
+}
+
+model TelegramPost {
+  id              String    @id @default(cuid())
+  campaignId      String
+  campaign        Campaign  @relation(fields: [campaignId], references: [id])
+  channelId       String
+  channel         TelegramChannel @relation(fields: [channelId], references: [id])
+  contentPieceId  String?
+  content         String
+  imagePath       String?
+  status          String    @default("queued")
+  scheduledAt     DateTime
+  sentAt          DateTime?
+  views           Int       @default(0)
+  forwards        Int       @default(0)
+}
+
+model PublishJob {
+  id              String    @id @default(cuid())
+  campaignId      String
+  campaign        Campaign  @relation(fields: [campaignId], references: [id])
+  platform        String
+  contentPieceId  String?
+  status          String    @default("queued")
+  attemptCount    Int       @default(0)
+  platformUrl     String?
+  errorMessage    String?
+  publishedAt     DateTime?
+  createdAt       DateTime  @default(now())
+}
+
+model PlatformAccount {
+  id                  String    @id @default(cuid())
+  platform            String
+  username            String
+  credentialsEncrypted String
+  isActive            Boolean   @default(true)
+  lastUsedAt          DateTime?
+  createdAt           DateTime  @default(now())
+}
+
+model DailyAnalytic {
+  id              String    @id @default(cuid())
+  campaignId      String
+  campaign        Campaign  @relation(fields: [campaignId], references: [id])
+  date            DateTime
+  clicks          Int       @default(0)
+  uniqueClicks    Int       @default(0)
+  conversions     Int       @default(0)
+  revenue         Float     @default(0)
+  optIns          Int       @default(0)
+  emailOpens      Int       @default(0)
+  emailClicks     Int       @default(0)
+  telegramViews   Int       @default(0)
+  @@unique([campaignId, date])
+}

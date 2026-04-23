@@ -1,0 +1,68 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: affiliate
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: affiliatecastle
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    ports:
+      - "127.0.0.1:6379:6379"
+
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "127.0.0.1:11434:11434"
+
+  listmonk:
+    image: listmonk/listmonk:latest
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      LISTMONK_app__address: "0.0.0.0:9000"
+      LISTMONK_db__host: postgres
+      LISTMONK_db__port: 5432
+      LISTMONK_db__user: affiliate
+      LISTMONK_db__password: ${POSTGRES_PASSWORD:-password}
+      LISTMONK_db__database: affiliatecastle
+    ports:
+      - "127.0.0.1:9000:9000"
+    volumes:
+      - listmonk_uploads:/listmonk/uploads
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+      - ollama
+      - listmonk
+    env_file: .env
+    ports:
+      - "127.0.0.1:3200:3200"
+    volumes:
+      - ./public/magnets:/app/public/magnets
+      - ./public/img:/app/public/img
+
+volumes:
+  postgres_data:
+  redis_data:
+  ollama_data:
+  listmonk_uploads:

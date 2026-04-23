@@ -1,0 +1,9 @@
+node_modules/
+.next/
+.env
+.env.local
+dist/
+public/magnets/
+public/img/generated/
+*.pem
+prisma/dev.db

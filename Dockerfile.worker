@@ -1,0 +1,22 @@
+FROM node:20-alpine
+
+RUN apk add --no-cache libc6-compat python3 make g++ cairo-dev pango-dev jpeg-dev giflib-dev chromium nss freetype harfbuzz ca-certificates ttf-freefont
+
+# Playwright uses system chromium on Alpine
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
+WORKDIR /app
+
+COPY package.json package-lock.json* ./
+RUN npm ci --legacy-peer-deps
+
+COPY prisma ./prisma
+RUN npx prisma@5 generate
+
+COPY tsconfig.json ./
+COPY src ./src
+
+ENV NODE_ENV=production
+
+CMD ["node", "--require", "ts-node/register/transpile-only", "src/workers/offer-pipeline.ts"]

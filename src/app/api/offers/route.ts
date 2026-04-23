@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
+import { getOfferQueue } from '@/lib/queue'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -29,16 +31,33 @@ export async function POST(req: NextRequest) {
 
   const { hoplink } = parsed.data
 
-  // Sprint 2 will: resolve hoplink → scrape offer page → extract product details via LLM
-  // → create Offer + Campaign records in DB → enqueue full pipeline job
+  // Create Offer record
+  const offer = await prisma.offer.create({
+    data: { hoplink, status: 'pending' },
+  })
 
-  // For Sprint 1: return a mock campaign ID so the UI redirects correctly
-  const mockCampaignId = `draft-${Date.now()}`
+  // Create Campaign record
+  const campaign = await prisma.campaign.create({
+    data: {
+      offerId: offer.id,
+      name: hoplink,
+      status: 'draft',
+    },
+  })
+
+  // Enqueue the full pipeline job
+  const queue = getOfferQueue()
+  await queue.add('process', {
+    offerId: offer.id,
+    campaignId: campaign.id,
+    hoplink,
+  })
 
   return NextResponse.json({
-    campaignId: mockCampaignId,
+    campaignId: campaign.id,
+    offerId: offer.id,
     hoplink,
     status: 'queued',
-    message: 'Campaign created. Pipeline will start in Sprint 2.',
+    message: 'Campaign created. Pipeline is running.',
   }, { status: 201 })
 }

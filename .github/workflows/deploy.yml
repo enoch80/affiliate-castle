@@ -40,7 +40,9 @@ jobs:
             cd /opt/affiliate-castle
             git pull origin main
             docker compose build app
-            docker compose up -d app
+            # Run Prisma migrations before starting app
+            docker compose run --rm --no-deps app npx prisma migrate deploy
+            docker compose up -d
             docker image prune -f
             echo "Deploy complete at $(date)"
           ENDSSH

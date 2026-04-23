@@ -61,6 +61,19 @@ services:
       - ./public/magnets:/app/public/magnets
       - ./public/img:/app/public/img
 
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+      - ollama
+    env_file: .env
+    volumes:
+      - ./public/magnets:/app/public/magnets
+
 volumes:
   postgres_data:
   redis_data:

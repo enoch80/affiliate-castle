@@ -25,7 +25,11 @@ jobs:
         run: |
           ssh root@109.199.106.147 '
             if [ ! -d /opt/affiliate-castle/.git ]; then
-              git clone https://github.com/enoch80/Affilate-castle-.git /opt/affiliate-castle
+              git clone https://github.com/enoch80/affiliate-castle.git /opt/affiliate-castle
+            fi
+            # Ensure .env exists
+            if [ ! -f /opt/affiliate-castle/.env ]; then
+              cp /opt/affiliate-castle/.env.example /opt/affiliate-castle/.env
             fi
           '
 

@@ -352,6 +352,67 @@
         "app rebuilt with --no-cache in docker; affiliate-castle-app-1 Up 23s at run start",
         "Tunnel: ssh -i ~/.ssh/contabo_key -fNL 3200:127.0.0.1:3200 root@109.199.106.147 -N"
       ]
+    },
+    {
+      "@type": "QAEntry",
+      "sprint": "Sprint 12",
+      "date": "2026-04-24",
+      "commit": "31526e3",
+      "status": "passed",
+      "description": "Sprint 12 — Production deploy: health component checks, SMTP warmup API, full E2E smoke test (hoplink → click → opt-in → conversion → analytics)",
+      "regressionTotal": 123,
+      "regressionPassing": 123,
+      "regressionBreakdown": {
+        "sprint1": 16, "sprint2": 8, "sprint3": 9, "sprint4": 10,
+        "sprint5": 9, "sprint6": 7, "sprint7": 9, "sprint8": 9,
+        "sprint9": 11, "sprint10": 10, "sprint11": 10, "sprint12": 10
+      },
+      "deployments": [
+        {
+          "file": "src/app/api/health/route.ts",
+          "description": "Enhanced with DB liveness probe (SELECT 1). Returns components.db = 'ok'|'error'. Returns 503 when degraded."
+        },
+        {
+          "file": "src/app/api/smtp/warmup/route.ts",
+          "description": "New endpoint GET /api/smtp/warmup (auth required). Returns dayNumber, dailyLimit, unlimited, startDate, sentToday, remainingToday. Reads SMTP_WARMUP_START_DATE env var via smtp-warmup.ts lib."
+        },
+        {
+          "file": "tests/e2e/sprint12.spec.ts",
+          "description": "10 E2E tests: health with components, SMTP warmup auth+structure+day1, traffic redirect, opt-in smoke, postback smoke, tracking visibility, analytics totals, settings round-trip, dashboard/settings UI"
+        }
+      ],
+      "bugfixes": [
+        {
+          "issue": "sprint6 optin validation tests got 429 when run alongside sprint12 smoke optin (shared rate-limit bucket)",
+          "fix": "sprint6 tests now use X-Forwarded-For: 10.99.1.1 / 10.99.1.2 for private test IP buckets"
+        },
+        {
+          "issue": "sprint11 test 9 optin also shared the real IP bucket",
+          "fix": "sprint11 test 9 now uses X-Forwarded-For: 10.99.2.1"
+        },
+        {
+          "issue": "sprint12 optin smoke got 429 on re-runs within 600s window",
+          "fix": "sprint12 smoke uses per-run derived IP: 10.100.X.Y computed from Date.now() — unique each run"
+        }
+      ],
+      "smokeTestFixtures": {
+        "campaignId": "cmocbnhc10002zj3hjorpynti",
+        "shortCode": "qo5jgvWA",
+        "destinationUrl": "https://hop.clickbank.net/?affiliate=testaffiliate&vendor=testvendor",
+        "status": "bridge_ready"
+      },
+      "knownFlakes": [
+        "sprint4 'content_ready campaign shows content pieces panel' — ERR_EMPTY_RESPONSE on first attempt under 2-worker parallel load; passes on retry",
+        "sprint5 'login still works (regression)' — chrome-error://chromewebdata/ on first attempt under load; passes on retry",
+        "Both flakes are infrastructure-level (server brief connection drop under 12-file parallel load), not code regressions"
+      ],
+      "notes": [
+        "SMTP_WARMUP_START_DATE=2026-04-24 → dayNumber=1, dailyLimit=50 on first run",
+        "POSTBACK_IP_WHITELIST not set → all IPs accepted for postback smoke test",
+        "PlatformAccount table confirmed present in production DB",
+        "Exit code 0: 123/123 passed (2 flaky on first attempt, both recovered on retry)",
+        "Tunnel: ssh -i ~/.ssh/contabo_key -fNL 3200:127.0.0.1:3200 root@109.199.106.147 -N"
+      ]
     }
   ]
 }

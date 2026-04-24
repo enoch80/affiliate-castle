@@ -32,6 +32,7 @@ import { renderPDF } from '../lib/pdf-generator'
 import { renderBridgePages } from '../lib/bridge-renderer'
 import { createTrackingLinks } from '../lib/tracking'
 import { publishCampaign } from '../lib/publisher/index'
+import { scheduleTelegramSeries } from '../lib/telegram-scheduler'
 import type { OfferPipelineJobData } from '../lib/queue'
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379'
@@ -440,6 +441,44 @@ async function processOfferJob(job: Job<OfferPipelineJobData>) {
     console.error('[offer-pipeline] Sprint 7 publish failed (non-fatal):', err)
   }
 
+  // -------------------------------------------------------------------------
+  // Sprint 8 — Step 21: Schedule Telegram 10-post series (if channel exists)
+  // -------------------------------------------------------------------------
+  // Automatically picks the first active TelegramChannel registered in the app.
+  // Non-fatal: if no channel exists, or scheduling fails, pipeline still succeeds.
+  let telegramPostsQueued = 0
+  try {
+    const defaultChannel = await prisma.telegramChannel.findFirst({
+      where: { isActive: true },
+      select: { id: true, channelUsername: true, channelId: true },
+      orderBy: { createdAt: 'asc' },
+    })
+
+    if (defaultChannel) {
+      const tgResult = await scheduleTelegramSeries({
+        campaignId,
+        channelId: defaultChannel.id,
+        channelTgId: defaultChannel.channelId ?? defaultChannel.channelUsername,
+        campaignName: extraction.productName || keyword,
+        niche: extraction.niche || 'general',
+        primaryKeyword: keyword,
+        bridgePageUrl,
+      })
+      telegramPostsQueued = tgResult.postsQueued
+      console.log(`[offer-pipeline] Sprint 8 — queued ${telegramPostsQueued} Telegram posts`)
+
+      // Advance campaign to 'live' once Telegram series is fully queued
+      await prisma.campaign.update({
+        where: { id: campaignId },
+        data: { status: 'live' },
+      })
+    } else {
+      console.log('[offer-pipeline] Sprint 8 — no active TelegramChannel found, skipping Telegram schedule')
+    }
+  } catch (err) {
+    console.error('[offer-pipeline] Sprint 8 Telegram schedule failed (non-fatal):', err)
+  }
+
   return {
     offerId,
     campaignId,
@@ -453,6 +492,7 @@ async function processOfferJob(job: Job<OfferPipelineJobData>) {
     bridgeSlugA,
     bridgeSlugB,
     trackingLinksCreated: trackingLinks.length,
+    telegramPostsQueued,
   }
 }
 

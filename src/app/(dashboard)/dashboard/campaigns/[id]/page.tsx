@@ -9,8 +9,25 @@ const STATUS_COLOR: Record<string, string> = {
   scraped:            'text-cyan-400',
   researched:         'text-green-400',
   brief_ready:        'text-indigo-400',
+  content_ready:      'text-emerald-400',
   scrape_failed:      'text-red-400',
   extraction_failed:  'text-red-400',
+}
+
+const CONTENT_TYPE_LABEL: Record<string, string> = {
+  seo_article:        'SEO Article',
+  bridge_headline_a:  'Bridge Headline A',
+  bridge_headline_b:  'Bridge Headline B',
+  platform_devto:     'dev.to Article',
+  platform_hashnode:  'Hashnode Article',
+  platform_blogger:   'Blogger Article',
+  platform_tumblr:    'Tumblr Post',
+  pinterest_captions: 'Pinterest Captions (5)',
+  telegram_posts:     'Telegram Posts (10)',
+  email_sequence:     'Email Sequence (7+3)',
+  lead_magnet_draft:  'Lead Magnet Draft',
+  faq_and_ctas:       'FAQ + CTAs + Headlines',
+  content_brief:      'Content Brief',
 }
 
 /** 8-step pipeline progress bar */
@@ -69,6 +86,12 @@ export default async function CampaignDetailPage({ params }: { params: { id: str
 
   // Keyword research
   const keywordData = offer?.keywordResearch?.[0]
+
+  // Sprint 4 — content pieces (all except brief)
+  const isContentReady = campaign.status === 'content_ready'
+  const sprint4Pieces = campaign.contentPieces.filter((p) => p.type !== 'content_brief')
+  const passingPieces = sprint4Pieces.filter((p) => p.detectionScore !== null && (p.detectionScore as number) < 15)
+  const failingPieces = sprint4Pieces.filter((p) => p.detectionScore !== null && (p.detectionScore as number) >= 15)
 
   const stats = [
     { label: 'Campaign Status', value: campaign.status.toUpperCase(), color: STATUS_COLOR[campaign.status] ?? 'text-slate-300' },
@@ -273,6 +296,75 @@ export default async function CampaignDetailPage({ params }: { params: { id: str
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Sprint 4 — Content Pieces */}
+      {isContentReady && sprint4Pieces.length > 0 && (
+        <div className="bg-slate-800 border border-emerald-700 rounded-xl p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-white">Content Pieces</h2>
+            <span className="bg-emerald-900 text-emerald-300 text-xs font-bold px-2 py-0.5 rounded">Sprint 4</span>
+          </div>
+
+          {/* Detection score summary */}
+          <div className="flex gap-4 mb-5">
+            <div className="flex-1 bg-slate-900 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-emerald-400">{sprint4Pieces.length}</div>
+              <div className="text-xs text-slate-400">Total Pieces</div>
+            </div>
+            <div className="flex-1 bg-slate-900 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-green-400">{passingPieces.length}</div>
+              <div className="text-xs text-slate-400">Pass (&lt;15% AI)</div>
+            </div>
+            <div className="flex-1 bg-slate-900 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-red-400">{failingPieces.length}</div>
+              <div className="text-xs text-slate-400">Needs Revision</div>
+            </div>
+          </div>
+
+          {/* Piece list */}
+          <div className="space-y-2">
+            {sprint4Pieces.map((piece) => {
+              const score = piece.detectionScore as number | null
+              const passes = score !== null && score < 15
+              const label = CONTENT_TYPE_LABEL[piece.type] ?? piece.type
+              const wordCount = piece.contentText ? piece.contentText.split(/\s+/).length : 0
+              return (
+                <div key={piece.id} className="flex items-center justify-between bg-slate-900 rounded-lg px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${passes ? 'bg-green-400' : score === null ? 'bg-slate-500' : 'bg-red-400'}`} />
+                    <div>
+                      <div className="text-white text-sm font-medium">{label}</div>
+                      <div className="text-slate-500 text-xs">{wordCount} words · {piece.status}</div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    {score !== null ? (
+                      <span className={`text-sm font-bold ${passes ? 'text-green-400' : 'text-red-400'}`}>
+                        {score.toFixed(1)}% AI
+                      </span>
+                    ) : (
+                      <span className="text-slate-500 text-xs">scoring…</span>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Sprint 4 — generating status */}
+      {campaign.status === 'brief_ready' && brief && (
+        <div className="bg-slate-800 border border-emerald-800 rounded-xl p-6 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse" />
+            <div>
+              <div className="font-semibold text-emerald-300">Generating Content (12 pieces)</div>
+              <div className="text-slate-400 text-sm">Producing SEO article, platform articles, email sequence, Telegram posts…</div>
+            </div>
+          </div>
         </div>
       )}
 

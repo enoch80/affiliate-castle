@@ -10,6 +10,10 @@
  * 7. [Sprint 3] Run semantic gap analysis
  * 8. [Sprint 3] Generate content brief JSON
  * 9. [Sprint 3] Update Campaign status to 'brief_ready'
+ * 10. [Sprint 4] Generate all 12 content types using brief + offer data
+ * 11. [Sprint 4] Humanize each piece (burstiness + phrase replacement)
+ * 12. [Sprint 4] Score each piece for AI detection (target <15%)
+ * 13. [Sprint 4] Persist all ContentPieces + update Campaign to 'content_ready'
  */
 
 import { Worker, Job } from 'bullmq'
@@ -21,6 +25,9 @@ import { extractOfferDetails } from '../lib/llm-extractor'
 import { scrapeSerpTop10 } from '../lib/serp-scraper'
 import { analyzeSemanticGap } from '../lib/semantic-gap'
 import { generateContentBrief } from '../lib/content-brief'
+import { generateAllContent } from '../lib/content-generator'
+import { humanize } from '../lib/humanizer'
+import { scoreContent } from '../lib/ai-detector'
 import type { OfferPipelineJobData } from '../lib/queue'
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379'
@@ -209,10 +216,75 @@ async function processOfferJob(job: Job<OfferPipelineJobData>) {
     data: { status: 'brief_ready' },
   })
 
-  await job.updateProgress(100)
-  console.log(`[offer-pipeline] Job ${job.id} complete — campaign ${campaignId} is brief_ready`)
+  // ─── Sprint 4: Generate 12 content types, humanize, score ──────────────────
+  await job.updateProgress(88)
+  console.log(`[offer-pipeline] Sprint 4: generating 12 content pieces for campaign ${campaignId}`)
 
-  return { offerId, campaignId, productName: extraction.productName, briefReady: true }
+  // Step 10: Generate all 12 content types
+  let generatedPieces: import('../lib/content-generator').GeneratedContent[] = []
+  try {
+    generatedPieces = await generateAllContent(brief)
+    console.log(`[offer-pipeline] Sprint 4: generated ${generatedPieces.length} content pieces`)
+  } catch (err) {
+    console.error('[offer-pipeline] Sprint 4 content generation failed (non-fatal):', err)
+  }
+
+  // Steps 11–13: Humanize each piece, score, persist
+  const contentPieceIds: string[] = []
+  for (const piece of generatedPieces) {
+    // Step 11: Humanize
+    const humanizationResult = humanize(piece.contentText, piece.type)
+
+    // Step 12: Score for AI detection
+    const detection = scoreContent(humanizationResult.humanized)
+    console.log(`[offer-pipeline] Sprint 4: ${piece.type} → AI score ${detection.score.toFixed(1)}% (passes: ${detection.passesThreshold})`)
+
+    // Step 13: Persist ContentPiece
+    const saved = await prisma.contentPiece.create({
+      data: {
+        campaignId,
+        type: piece.type,
+        contentText: humanizationResult.humanized,
+        contentHtml: piece.contentHtml,
+        detectionScore: detection.score,
+        status: detection.passesThreshold ? 'ready' : 'needs_revision',
+      },
+    })
+    contentPieceIds.push(saved.id)
+  }
+
+  const passingCount = generatedPieces.length > 0
+    ? (await prisma.contentPiece.findMany({
+        where: { campaignId, status: 'ready', NOT: { type: 'content_brief' } },
+      })).length
+    : 0
+
+  console.log(`[offer-pipeline] Sprint 4: ${passingCount}/${generatedPieces.length} pieces passed AI detection`)
+
+  // Advance campaign to content_ready regardless of detection score
+  // (pieces flagged 'needs_revision' can be re-generated from the dashboard)
+  await prisma.offer.update({
+    where: { id: offerId },
+    data: { status: 'content_ready' },
+  })
+
+  await prisma.campaign.update({
+    where: { id: campaignId },
+    data: { status: 'content_ready' },
+  })
+
+  await job.updateProgress(100)
+  console.log(`[offer-pipeline] Job ${job.id} complete — campaign ${campaignId} is content_ready`)
+
+  return {
+    offerId,
+    campaignId,
+    productName: extraction.productName,
+    briefReady: true,
+    contentReady: true,
+    piecesGenerated: generatedPieces.length,
+    passingDetection: passingCount,
+  }
 }
 
 // Start the worker

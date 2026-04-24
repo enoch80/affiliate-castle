@@ -34,17 +34,19 @@ test.describe('Sprint 6 – Tracking Engine', () => {
   })
 
   test('/api/t/optin rejects invalid email with 400', async ({ request }) => {
+    // Use a private test IP to avoid consuming the shared rate-limit bucket
     const resp = await request.post(`${BASE}/api/t/optin`, {
       data: { email: 'not-an-email', campaignId: 'test-123' },
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-forwarded-for': '10.99.1.1' },
     })
     expect(resp.status()).toBe(400)
   })
 
   test('/api/t/optin rejects missing campaignId with 400', async ({ request }) => {
+    // Use a private test IP to avoid consuming the shared rate-limit bucket
     const resp = await request.post(`${BASE}/api/t/optin`, {
       data: { email: 'tester@example.com' },
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'x-forwarded-for': '10.99.1.2' },
     })
     expect(resp.status()).toBe(400)
   })

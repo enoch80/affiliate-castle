@@ -133,8 +133,10 @@ test.describe('Sprint 11 – Security', () => {
 
   // ── 9 ──────────────────────────────────────────────────────────────────────
   test('POST /api/t/optin with invalid email returns 400', async ({ request }) => {
+    // Use a private test IP so this call doesn't share the rate-limit bucket
     const resp = await request.post(`${BASE}/api/t/optin`, {
       data: { email: 'not-an-email', campaignId: 'cid_test' },
+      headers: { 'x-forwarded-for': '10.99.2.1' },
     })
     expect(resp.status()).toBe(400)
     const body = await resp.json()

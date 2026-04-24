@@ -51,9 +51,9 @@ function countFrequency<T>(arrays: T[][]): Map<T, number> {
   const freq = new Map<T, number>()
   for (const arr of arrays) {
     const seen = new Set(arr)
-    for (const item of seen) {
+    Array.from(seen).forEach((item) => {
       freq.set(item, (freq.get(item) || 0) + 1)
-    }
+    })
   }
   return freq
 }
@@ -82,14 +82,14 @@ export function analyzeSemanticGap(keyword: string, serpResults: SerpResult[]): 
   const targetWordCount = Math.round(avgWordCount * 1.15) // +15% to outrank
 
   // Named entity extraction
-  const entitySets = validResults.map((r) => [...new Set(extractEntities(r.bodyText))])
+  const entitySets = validResults.map((r) => Array.from(new Set(extractEntities(r.bodyText))))
   const entityFreq = countFrequency(entitySets)
-  const mandatoryEntities = [...entityFreq.entries()]
+  const mandatoryEntities = Array.from(entityFreq.entries())
     .filter(([, cnt]) => cnt >= Math.ceil(total * 0.7) && cnt >= 2)
     .map(([e]) => e)
     .slice(0, 30)
 
-  const recommendedEntities = [...entityFreq.entries()]
+  const recommendedEntities = Array.from(entityFreq.entries())
     .filter(([, cnt]) => cnt >= Math.ceil(total * 0.3) && cnt < Math.ceil(total * 0.7))
     .map(([e]) => e)
     .slice(0, 20)
@@ -106,12 +106,12 @@ export function analyzeSemanticGap(keyword: string, serpResults: SerpResult[]): 
   ])
 
   const lsiTerms = [
-    ...[...bigramFreq.entries()]
+    ...Array.from(bigramFreq.entries())
       .filter(([term, cnt]) => cnt >= 3 && !stopBigrams.has(term))
       .sort((a, b) => b[1] - a[1])
       .map(([term]) => term)
       .slice(0, 15),
-    ...[...trigramFreq.entries()]
+    ...Array.from(trigramFreq.entries())
       .filter(([, cnt]) => cnt >= 2)
       .sort((a, b) => b[1] - a[1])
       .map(([term]) => term)
@@ -121,7 +121,7 @@ export function analyzeSemanticGap(keyword: string, serpResults: SerpResult[]): 
   // Required headings: H2s that appear (normalized) in 5+ results
   const h2Sets = validResults.map((r) => r.h2.map(normalize))
   const h2Freq = countFrequency(h2Sets)
-  const requiredHeadings = [...h2Freq.entries()]
+  const requiredHeadings = Array.from(h2Freq.entries())
     .filter(([, cnt]) => cnt >= Math.max(2, Math.ceil(total * 0.5)))
     .map(([h]) => h)
     .slice(0, 10)
@@ -132,7 +132,7 @@ export function analyzeSemanticGap(keyword: string, serpResults: SerpResult[]): 
     .map(normalize)
     .filter(Boolean)
   const faqFreq = countFrequency(allFaqQ.map((q) => [q]))
-  const faqQuestions = [...new Set(allFaqQ)]
+  const faqQuestions = Array.from(new Set(allFaqQ))
     .sort((a, b) => (faqFreq.get(b) || 0) - (faqFreq.get(a) || 0))
     .slice(0, 12)
 

@@ -44,6 +44,172 @@
         "Tests 7-9 (content_ready UI tests) soft-pass while no content_ready campaigns exist",
         "GET /api/campaigns list endpoint not yet implemented — needed for full Sprint 4 UI tests"
       ]
+    },
+    {
+      "@type": "QAEntry",
+      "sprint": "Sprint 5",
+      "date": "2026-04-24",
+      "commit": "a65cfce",
+      "status": "passed",
+      "description": "Sprint 5 — Lead Magnet PDF generation, bridge page templates (A/B), exit intent script injection",
+      "regressionTotal": 53,
+      "regressionPassing": 53,
+      "regressionBreakdown": {
+        "sprint1": 16, "sprint2": 8, "sprint3": 9, "sprint4": 10, "sprint5": 10
+      },
+      "ciConclusion": "success",
+      "components": [
+        "src/lib/pdf-generator.ts",
+        "src/lib/bridge-renderer.ts",
+        "src/app/go/[slug]/page.tsx",
+        "tests/e2e/sprint5.spec.ts"
+      ],
+      "notes": [
+        "Bridge page slugA/slugB soft-skip when no bridge_ready campaign present",
+        "PDF generation via Puppeteer — requires headless Chrome"
+      ]
+    },
+    {
+      "@type": "QAEntry",
+      "sprint": "Sprint 6",
+      "date": "2026-04-24",
+      "commit": "a65cfce",
+      "status": "passed",
+      "description": "Sprint 6 — Click tracking, dedup (24h IP-hash), postback handler (ClickBank/JVZoo/Digistore24/Generic), tracking stats API",
+      "regressionTotal": 63,
+      "regressionPassing": 63,
+      "regressionBreakdown": {
+        "sprint1": 16, "sprint2": 8, "sprint3": 9, "sprint4": 10, "sprint5": 10, "sprint6": 10
+      },
+      "ciConclusion": "success",
+      "components": [
+        "src/lib/tracking.ts",
+        "src/app/api/r/[code]/route.ts",
+        "src/app/api/t/click/route.ts",
+        "src/app/api/t/optin/route.ts",
+        "src/app/api/postback/route.ts",
+        "src/app/api/campaigns/[id]/tracking/route.ts",
+        "src/workers/offer-pipeline.ts (step 17)",
+        "tests/e2e/sprint6.spec.ts"
+      ],
+      "notes": [
+        "IPs stored as SHA-256 only — GDPR compliant",
+        "POSTBACK_IP_WHITELIST env var: empty = accept all",
+        "createTrackingLinks is idempotent"
+      ]
+    },
+    {
+      "@type": "QAEntry",
+      "sprint": "Sprint 7",
+      "date": "2026-04-24",
+      "commit": "a65cfce",
+      "status": "passed",
+      "description": "Sprint 7 — Multi-platform publisher (WordPress/Ghost/DEV.to), IndexNow, Canvas social image, sitemap generation",
+      "regressionTotal": 73,
+      "regressionPassing": 73,
+      "regressionBreakdown": {
+        "sprint1": 16, "sprint2": 8, "sprint3": 9, "sprint4": 10,
+        "sprint5": 10, "sprint6": 10, "sprint7": 10
+      },
+      "ciConclusion": "success",
+      "components": [
+        "src/lib/publisher/index.ts",
+        "src/lib/publisher/wordpress.ts",
+        "src/lib/publisher/ghost.ts",
+        "src/lib/publisher/devto.ts",
+        "src/lib/indexnow.ts",
+        "src/lib/canvas-generator.ts",
+        "src/app/api/sitemap.xml/route.ts",
+        "tests/e2e/sprint7.spec.ts"
+      ],
+      "notes": [
+        "sitemap.xml soft-skip on first deploy — generated after first published campaign",
+        "IndexNow key served from /.well-known/indexnow.txt"
+      ]
+    },
+    {
+      "@type": "QAEntry",
+      "sprint": "Sprint 8",
+      "date": "2026-04-24",
+      "commit": "a65cfce",
+      "status": "passed",
+      "description": "Sprint 8 — Telegram automation: channel registry, BullMQ scheduler, multi-post series, directory submit fallback",
+      "regressionTotal": 83,
+      "regressionPassing": 83,
+      "regressionBreakdown": {
+        "sprint1": 16, "sprint2": 8, "sprint3": 9, "sprint4": 10,
+        "sprint5": 10, "sprint6": 10, "sprint7": 10, "sprint8": 10
+      },
+      "ciConclusion": "success",
+      "components": [
+        "src/lib/telegram-scheduler.ts",
+        "src/workers/telegram-worker.ts",
+        "src/app/api/channels/route.ts",
+        "src/app/api/channels/[id]/route.ts",
+        "src/workers/offer-pipeline.ts (step 21)",
+        "tests/e2e/sprint8.spec.ts"
+      ],
+      "notes": [
+        "KeywordResearch.primaryKeyword confirmed as correct field (not MarketResearch)",
+        "GET /api/channels returns empty array when no channels registered — expected"
+      ]
+    },
+    {
+      "@type": "QAEntry",
+      "sprint": "Sprint 9",
+      "date": "2026-04-24",
+      "commit": "921cd1a",
+      "status": "passed",
+      "description": "Sprint 9 — Listmonk API client, 7-email emotional-arc drip sequence (Days 0/1/3/5/7/10/14), 3-email re-engage sequence (Days 17/20/23), heuristic spam scorer (<2.0=ok, 2.0-3.5=warning, >3.5=blocked), BullMQ EMAIL_DRIP worker with SMTP warm-up quota, cold-subscriber tagging, /api/campaigns/[id]/email GET+POST, pipeline step 22",
+      "regressionTotal": 93,
+      "regressionPassing": 93,
+      "regressionBreakdown": {
+        "sprint1": 16, "sprint2": 8, "sprint3": 9, "sprint4": 10,
+        "sprint5": 10, "sprint6": 10, "sprint7": 10, "sprint8": 10, "sprint9": 10
+      },
+      "ciConclusion": "success",
+      "regressionRuntime": "2.6 minutes",
+      "components": [
+        "src/lib/listmonk.ts",
+        "src/lib/spam-checker.ts",
+        "src/lib/email-sequence.ts",
+        "src/lib/drip-scheduler.ts",
+        "src/workers/email-worker.ts",
+        "src/app/api/campaigns/[id]/email/route.ts",
+        "src/workers/offer-pipeline.ts (step 22)",
+        "tests/e2e/sprint9.spec.ts"
+      ],
+      "buildFixes": [
+        {
+          "file": "src/lib/email-sequence.ts",
+          "lines": [220, 230],
+          "issue": "Smart apostrophes (') in template literals caused TS1005 parse errors",
+          "fix": "Line 220: changed outer quotes from backtick to double-quote for CTA button string. Line 230: escaped apostrophe as \\' inside backtick literal"
+        }
+      ],
+      "spamScoreValidation": {
+        "threshold": 2.0,
+        "allEmailsBelow": true,
+        "stepsBlocked": 0,
+        "verdict": "ok"
+      },
+      "emailSequence": {
+        "mainDays": [0, 1, 3, 5, 7, 10, 14],
+        "reEngageDays": [17, 20, 23],
+        "totalSteps": 10,
+        "emotionalArc": "RELIEF → TRUST → RESPECT → CURIOSITY → PROOF → SAFETY → URGENCY",
+        "sendTime": "09:00 UTC",
+        "ctaColor": "#F97316"
+      },
+      "notes": [
+        "Listmonk env vars: LISTMONK_URL, LISTMONK_USERNAME, LISTMONK_PASSWORD, LISTMONK_LIST_ID, LISTMONK_DRIP_TEMPLATE_ID",
+        "Email env vars: EMAIL_SENDER_NAME, EMAIL_SENDER_ADDRESS, EMAIL_PHYSICAL_ADDRESS, PIPELINE_TEST_EMAIL",
+        "SMTP warm-up ramp: 50/d (wk1) → 100 → 300 → 600 → 1000 → unlimited from SMTP_WARMUP_START_DATE",
+        "Cold subscriber tagging occurs after final re-engage failure (step 10)",
+        "PIPELINE_TEST_EMAIL seeds a test drip when pipeline runs",
+        "API auth required — 401 returned without session",
+        "Tunnel: ssh -i ~/.ssh/contabo_key -L 3200:127.0.0.1:3200 root@109.199.106.147 -N -f"
+      ]
     }
   ]
 }

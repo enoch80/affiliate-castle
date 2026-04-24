@@ -5,14 +5,27 @@
  * stores a ClickEvent attributed to the bridge page's short code.
  * No auth required (public-facing).
  *
- * Body: { email: string, name?: string, campaignId: string, shortCode?: string }
+ * Body: { email: string, name?: string, campaignId: string, shortCode?: string, bridgePageId?: string }
+ *
+ * Rate limit: 5 opt-ins per IP per 10 min  (prevents form-spam abuse)
+ * GDPR: subscribedAt records the consent timestamp; IP stored only as SHA-256 hash.
  */
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
-import { recordClick } from '@/lib/tracking'
+import { recordClick, hashIp } from '@/lib/tracking'
+import { rateLimit } from '@/lib/rate-limiter'
 import { headers } from 'next/headers'
 
 export const dynamic = 'force-dynamic'
+
+const optinSchema = z.object({
+  email: z.string().email().max(254),
+  name: z.string().max(100).optional().nullable(),
+  campaignId: z.string().min(1).max(64),
+  shortCode: z.string().max(64).optional().nullable(),
+  bridgePageId: z.string().max(64).optional().nullable(),
+})
 
 function getRawIp(req: NextRequest): string {
   const headersList = headers()
@@ -21,44 +34,45 @@ function getRawIp(req: NextRequest): string {
   return req.ip ?? '0.0.0.0'
 }
 
-// Basic email format validation — no external libs required
-function isValidEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-}
-
 export async function POST(req: NextRequest) {
-  let body: Record<string, unknown>
+  // Rate limiting — 5 opt-ins per IP per 10 min (GDPR-safe: use IP hash)
+  const rawIp = getRawIp(req)
+  const ipHash = hashIp(rawIp)
+  if (!rateLimit('optin', ipHash, { requests: 5, windowSec: 600 })) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
+
+  let body: unknown
   try {
     body = await req.json()
   } catch {
     return NextResponse.json({ error: 'invalid body' }, { status: 400 })
   }
 
-  const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : null
-  const campaignId = typeof body.campaignId === 'string' ? body.campaignId : null
-  const name = typeof body.name === 'string' ? body.name.trim().slice(0, 100) : null
-  const shortCode = typeof body.shortCode === 'string' ? body.shortCode : null
-
-  if (!email || !isValidEmail(email)) {
-    return NextResponse.json({ error: 'valid email required' }, { status: 400 })
+  const parsed = optinSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: 'Validation failed', issues: parsed.error.issues },
+      { status: 400 }
+    )
   }
 
-  if (!campaignId) {
-    return NextResponse.json({ error: 'campaignId required' }, { status: 400 })
-  }
+  const { email, name, campaignId, shortCode, bridgePageId } = parsed.data
+  const normalizedEmail = email.trim().toLowerCase()
 
-  // Upsert subscriber — idempotent for the same email
+  // Upsert subscriber — idempotent for same email; subscribedAt = GDPR consent timestamp
   await prisma.emailSubscriber.upsert({
-    where: { email },
+    where: { email: normalizedEmail },
     create: {
-      email,
-      firstName: name,
+      email: normalizedEmail,
+      firstName: name ?? null,
       sourceCampaignId: campaignId,
       nicheTag: null,
       status: 'active',
+      // subscribedAt is @default(now()) — records the GDPR consent timestamp
     },
     update: {
-      // Do not overwrite existing consent data
+      // Do not overwrite existing consent data on re-submission
     },
   })
 
@@ -67,7 +81,7 @@ export async function POST(req: NextRequest) {
     try {
       await recordClick({
         shortCode,
-        rawIp: getRawIp(req),
+        rawIp,
         userAgent: req.headers.get('user-agent'),
         referrer: req.headers.get('referer'),
         utmSource: 'optin',
@@ -78,7 +92,6 @@ export async function POST(req: NextRequest) {
   }
 
   // Increment BridgePage opt-ins counter if bridgePageId is provided
-  const bridgePageId = typeof body.bridgePageId === 'string' ? body.bridgePageId : null
   if (bridgePageId) {
     await prisma.bridgePage.update({
       where: { id: bridgePageId },

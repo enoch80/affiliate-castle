@@ -166,8 +166,8 @@ function articleFallback(brief: ContentBrief, offer: OfferContext, platform: str
   const intro = `If you've been looking for the best way to understand ${primaryKeyword}, you're not alone. Thousands of people every month search for exactly this — and most guides leave them more confused than when they started.\n\nIn this guide, we break down everything you need to know about ${primaryKeyword}, including ${(mandatoryEntities.slice(0, 3)).join(', ')}, and why most people overlook the key factor that actually drives results.\n\nHere's what we'll cover:\n- How ${primaryKeyword} actually works\n- The #1 mistake people make\n- What ${productName} does differently`
 
   const sections = (suggestedOutline || []).map(s => {
-    if (s.level === 'H1') return `# ${s.text}\n\n${proposedMetaDescription}\n`
-    if (s.level === 'H2') return `## ${s.text}\n\n${s.notes || ''} This section covers approximately ${s.targetWords || 300} words on ${s.text.toLowerCase()}.\n`
+    if (s.level === 'h1') return `# ${s.text}\n\n${proposedMetaDescription}\n`
+    if (s.level === 'h2') return `## ${s.text}\n\n${s.notes || ''} This section covers approximately ${s.targetWords || 300} words on ${s.text.toLowerCase()}.\n`
     return `### ${s.text}\n\n${s.notes || ''}\n`
   }).join('\n')
 

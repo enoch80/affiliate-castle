@@ -56,7 +56,8 @@ test.describe('Sprint 5 – Bridge Pages & Lead Magnet', () => {
     await page.fill('input[type="password"]', PASSWORD)
     await page.click('button[type="submit"]')
     await page.waitForURL(/\/dashboard/, { timeout: 15000 })
-    await expect(page.locator('h1, h2').filter({ hasText: /campaign/i }).first()).toBeVisible({ timeout: 10000 })
+    // Sidebar "Campaigns" nav link is visible on the dashboard
+    await expect(page.locator('nav a, aside a, [role="navigation"] a').filter({ hasText: /campaigns/i }).first()).toBeVisible({ timeout: 10000 })
   })
 
   test('bridge_ready campaign shows Bridge Pages panel', async ({ page }) => {

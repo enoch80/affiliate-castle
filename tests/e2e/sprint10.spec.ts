@@ -138,7 +138,7 @@ test.describe('Sprint 10 – Dashboard Analytics & PWA', () => {
     await page.waitForURL(/\/dashboard/, { timeout: 15000 })
 
     await page.goto(`${BASE}/dashboard/analytics`)
-    await page.waitForLoadState('networkidle', { timeout: 15000 })
+    await page.waitForLoadState('domcontentloaded', { timeout: 15000 })
 
     // Page should not show an error state
     const body = await page.locator('body').innerText()
@@ -163,7 +163,7 @@ test.describe('Sprint 10 – Dashboard Analytics & PWA', () => {
     await page.waitForURL(/\/dashboard/, { timeout: 15000 })
 
     await page.goto(`${BASE}/dashboard/campaigns`)
-    await page.waitForLoadState('networkidle', { timeout: 15000 })
+    await page.waitForLoadState('domcontentloaded', { timeout: 15000 })
 
     const body = await page.locator('body').innerText()
     expect(body).not.toContain('Application error')

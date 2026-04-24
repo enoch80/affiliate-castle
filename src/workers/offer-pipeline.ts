@@ -6,6 +6,10 @@
  * 3. LLM extraction of product details
  * 4. Persist all data to DB (Offer + MarketResearch records)
  * 5. Update Campaign status to 'researched'
+ * 6. [Sprint 3] Scrape Bing SERP top 10 for primary keyword
+ * 7. [Sprint 3] Run semantic gap analysis
+ * 8. [Sprint 3] Generate content brief JSON
+ * 9. [Sprint 3] Update Campaign status to 'brief_ready'
  */
 
 import { Worker, Job } from 'bullmq'
@@ -14,6 +18,9 @@ import { prisma } from '../lib/prisma'
 import { resolveHoplink } from '../lib/link-resolver'
 import { scrapeOfferPage } from '../lib/offer-scraper'
 import { extractOfferDetails } from '../lib/llm-extractor'
+import { scrapeSerpTop10 } from '../lib/serp-scraper'
+import { analyzeSemanticGap } from '../lib/semantic-gap'
+import { generateContentBrief } from '../lib/content-brief'
 import type { OfferPipelineJobData } from '../lib/queue'
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379'
@@ -118,8 +125,8 @@ async function processOfferJob(job: Job<OfferPipelineJobData>) {
     },
   })
 
-  // Create keyword research record
-  await prisma.keywordResearch.create({
+  // Create keyword research record (Sprint 2 data only at this point)
+  const keywordRecord = await prisma.keywordResearch.create({
     data: {
       offerId,
       primaryKeyword: extraction.primaryKeyword,
@@ -127,7 +134,7 @@ async function processOfferJob(job: Job<OfferPipelineJobData>) {
     },
   })
 
-  // Step 5: Update Campaign status
+  // Step 5: Update Campaign status to 'researched'
   await prisma.campaign.update({
     where: { id: campaignId },
     data: {
@@ -137,10 +144,75 @@ async function processOfferJob(job: Job<OfferPipelineJobData>) {
     },
   })
 
-  await job.updateProgress(100)
-  console.log(`[offer-pipeline] Job ${job.id} complete — campaign ${campaignId} is researched`)
+  // ─── Sprint 3: SERP scraping + semantic gap + content brief ────────────────
+  await job.updateProgress(85)
+  const keyword = extraction.primaryKeyword || extraction.productName || 'affiliate offer'
 
-  return { offerId, campaignId, productName: extraction.productName }
+  let serpResults
+  try {
+    serpResults = await scrapeSerpTop10(keyword)
+    console.log(`[offer-pipeline] Sprint 3: scraped ${serpResults.length} SERP results`)
+  } catch (err) {
+    console.error('[offer-pipeline] Sprint 3 SERP scrape failed (non-fatal):', err)
+    serpResults = []
+  }
+
+  // Semantic gap analysis
+  const gapAnalysis = analyzeSemanticGap(keyword, serpResults)
+  console.log(`[offer-pipeline] Sprint 3: gap analysis — target ${gapAnalysis.targetWordCount} words, ${gapAnalysis.mandatoryEntities.length} mandatory entities`)
+
+  // Content brief generation
+  const brief = generateContentBrief({
+    campaignId,
+    primaryKeyword: keyword,
+    secondaryKeywords: (extraction.secondaryKeywords as string[]) || [],
+    angle: extraction.angle || '',
+    targetAudience: (extraction.targetAudience as string[]) || [],
+    painPoints: (extraction.painPoints as string[]) || [],
+    benefits: (extraction.benefits as string[]) || [],
+    productName: extraction.productName || '',
+    hoplink,
+    gap: gapAnalysis,
+  })
+
+  // Persist SERP data + brief into KeywordResearch record
+  await prisma.keywordResearch.update({
+    where: { id: keywordRecord.id },
+    data: {
+      serpTop10: serpResults as unknown as object[],
+      semanticGap: gapAnalysis as unknown as object,
+      avgWordCount: gapAnalysis.avgWordCount,
+      targetWordCount: gapAnalysis.targetWordCount,
+    },
+  })
+
+  // Store content brief in the ContentPiece table (type = 'content_brief')
+  await prisma.contentPiece.create({
+    data: {
+      campaignId,
+      type: 'content_brief',
+      contentText: JSON.stringify(brief, null, 2),
+      serpBriefJson: brief as unknown as object,
+      status: 'ready',
+    },
+  })
+
+  // Update offer status to reflect brief is ready
+  await prisma.offer.update({
+    where: { id: offerId },
+    data: { status: 'brief_ready' },
+  })
+
+  // Update campaign status to 'brief_ready'
+  await prisma.campaign.update({
+    where: { id: campaignId },
+    data: { status: 'brief_ready' },
+  })
+
+  await job.updateProgress(100)
+  console.log(`[offer-pipeline] Job ${job.id} complete — campaign ${campaignId} is brief_ready`)
+
+  return { offerId, campaignId, productName: extraction.productName, briefReady: true }
 }
 
 // Start the worker

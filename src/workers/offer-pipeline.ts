@@ -30,6 +30,7 @@ import { humanize } from '../lib/humanizer'
 import { scoreContent } from '../lib/ai-detector'
 import { renderPDF } from '../lib/pdf-generator'
 import { renderBridgePages } from '../lib/bridge-renderer'
+import { createTrackingLinks } from '../lib/tracking'
 import type { OfferPipelineJobData } from '../lib/queue'
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379'
@@ -387,6 +388,21 @@ async function processOfferJob(job: Job<OfferPipelineJobData>) {
     data: { status: 'bridge_ready' },
   })
 
+  // -------------------------------------------------------------------------
+  // Sprint 6 — Step 17: Create per-platform tracking links
+  // -------------------------------------------------------------------------
+  let trackingLinks: Awaited<ReturnType<typeof createTrackingLinks>>['links'] = []
+  try {
+    const trackingResult = await createTrackingLinks(
+      { campaignId, hoplink },
+      process.env.APP_BASE_URL ?? 'http://localhost:3200'
+    )
+    trackingLinks = trackingResult.links
+    console.log(`[offer-pipeline] Sprint 6 — ${trackingLinks.length} tracking links created`)
+  } catch (err) {
+    console.error('[offer-pipeline] Sprint 6 tracking links failed (non-fatal):', err)
+  }
+
   await job.updateProgress(100)
   console.log(`[offer-pipeline] Job ${job.id} complete — campaign ${campaignId} is bridge_ready`)
 
@@ -402,6 +418,7 @@ async function processOfferJob(job: Job<OfferPipelineJobData>) {
     leadMagnetUrl,
     bridgeSlugA,
     bridgeSlugB,
+    trackingLinksCreated: trackingLinks.length,
   }
 }
 

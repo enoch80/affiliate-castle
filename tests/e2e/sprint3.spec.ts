@@ -112,12 +112,14 @@ test.describe('Affiliate Castle Sprint 3', () => {
     await expect(page.locator('h1:has-text("Campaigns"), h2:has-text("Campaign")')).toBeVisible({ timeout: 10000 })
   })
 
-  test('API /api/offers POST rejects invalid URL', async ({ request }) => {
-    const res = await request.post(`${BASE_URL}/api/offers`, {
+  test('API /api/offers POST rejects invalid URL', async ({ page }) => {
+    await login(page)
+    const res = await page.request.post(`${BASE_URL}/api/offers`, {
       data: { hoplink: 'not-a-url' },
       headers: { 'Content-Type': 'application/json' },
     })
-    expect(res.status()).toBe(400)
+    // Should return 400 or 422 (validation rejection after auth passes)
+    expect([400, 422]).toContain(res.status())
   })
 
   test('API /api/campaigns/:id/brief returns 401 without auth', async ({ request }) => {

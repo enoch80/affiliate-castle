@@ -1,7 +1,6 @@
 const CACHE_NAME = 'affiliate-castle-v1'
+// Only pre-cache truly static, public assets — not auth-protected routes
 const STATIC_ASSETS = [
-  '/',
-  '/dashboard',
   '/manifest.json',
 ]
 
@@ -25,6 +24,12 @@ self.addEventListener('fetch', (event) => {
   const { request } = event
   const url = new URL(request.url)
 
+  // Always use network for navigation requests (HTML pages) to preserve CSRF tokens
+  if (request.mode === 'navigate') {
+    event.respondWith(fetch(request))
+    return
+  }
+
   // Network-first for API routes
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
@@ -35,8 +40,19 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // Cache-first for static assets
-  event.respondWith(
-    caches.match(request).then((cached) => cached ?? fetch(request))
-  )
+  // Cache-first only for static assets (images, fonts, manifest)
+  const isStaticAsset =
+    url.pathname.startsWith('/img/') ||
+    url.pathname.startsWith('/fonts/') ||
+    url.pathname === '/manifest.json'
+
+  if (isStaticAsset) {
+    event.respondWith(
+      caches.match(request).then((cached) => cached ?? fetch(request))
+    )
+    return
+  }
+
+  // All other requests: network-first
+  event.respondWith(fetch(request))
 })

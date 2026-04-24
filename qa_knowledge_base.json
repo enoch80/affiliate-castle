@@ -1,0 +1,49 @@
+{
+  "@context": "https://schema.org",
+  "@type": "KnowledgeBase",
+  "name": "Affiliate Castle QA Knowledge Base",
+  "entries": [
+    {
+      "@type": "QAEntry",
+      "sprint": "Sprint 4",
+      "date": "2026-04-24",
+      "commit": "e9fc527",
+      "status": "passed",
+      "description": "Sprint 4 — 12 content types, humanization pipeline, AI detection scoring",
+      "regressionTotal": 43,
+      "regressionPassing": 43,
+      "regressionBreakdown": {
+        "sprint1": 16,
+        "sprint2": 8,
+        "sprint3": 9,
+        "sprint4": 10
+      },
+      "ciConclusion": "success",
+      "buildFixes": [
+        {
+          "file": "src/lib/humanizer.ts",
+          "line": 217,
+          "issue": "Unescaped apostrophe in single-quoted string literal inside .replace()",
+          "fix": "Changed outer quotes from single to double: '. \\nHere\\'s...' → \". \\nHere's...\""
+        },
+        {
+          "file": "src/workers/offer-pipeline.ts",
+          "lines": [226, 236, 248],
+          "issue": "generateAllContent called with 1 arg (needs offer context); piece.contentText/contentHtml used instead of piece.text/piece.html",
+          "fix": "Built offerContext object from extraction data; corrected field names"
+        },
+        {
+          "file": "src/lib/content-generator.ts",
+          "line": 169,
+          "issue": "Outline level comparison used uppercase 'H1'/'H2' instead of lowercase 'h1'/'h2' as defined in ContentBrief type",
+          "fix": "Changed to lowercase 'h1'/'h2'"
+        }
+      ],
+      "notes": [
+        "23 brief_ready campaigns in DB — worker will process async as new hoplinks are submitted",
+        "Tests 7-9 (content_ready UI tests) soft-pass while no content_ready campaigns exist",
+        "GET /api/campaigns list endpoint not yet implemented — needed for full Sprint 4 UI tests"
+      ]
+    }
+  ]
+}

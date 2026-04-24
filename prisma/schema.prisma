@@ -71,6 +71,7 @@ model Campaign {
   publishJobs     PublishJob[]
   leadMagnets     LeadMagnet[]
   dailyAnalytics  DailyAnalytic[]
+  rankSnapshots   RankSnapshot[]
 }
 
 model ContentPiece {
@@ -256,4 +257,28 @@ model DailyAnalytic {
   emailClicks     Int       @default(0)
   telegramViews   Int       @default(0)
   @@unique([campaignId, date])
+}
+
+model RankSnapshot {
+  id          String   @id @default(cuid())
+  campaignId  String
+  campaign    Campaign @relation(fields: [campaignId], references: [id])
+  /// Platform identifier: devto | hashnode | blogger | tumblr | bridge
+  platform    String
+  /// The full published URL being tracked
+  platformUrl String
+  /// Target keyword for the ranking check
+  keyword     String
+  /// Search engine checked (always "bing" for now)
+  engine      String   @default("bing")
+  /// Position in SERP (1-based). NULL means not found in top 50.
+  rank        Int?
+  /// Whether the URL was found in top 10 (quick filter)
+  inTop10     Boolean  @default(false)
+  /// Whether the URL was found in top 50
+  inTop50     Boolean  @default(false)
+  checkedAt   DateTime @default(now())
+
+  @@index([campaignId, platform, checkedAt])
+  @@index([campaignId, keyword, checkedAt])
 }

@@ -317,6 +317,30 @@ Delays are intentional (BullMQ rate limiter) to avoid bot detection.
 1. IndexNow ping → all URLs submitted to Bing + Yandex + Seznam instantly
 2. Google Search Console ping (if configured)
 3. Sitemap at `t.yourdomain.com/sitemap.xml` updated automatically
+4. Rank check scheduled (on-demand or scheduled daily) to track position in Bing top 50
+
+### Rank Tracking (Free — Bing Scrape, No API Required)
+
+Tracks the Bing position of every published platform URL (dev.to, Hashnode, Blogger, Tumblr, bridge page) for the campaign's primary keyword.
+
+**How it works:**
+- Scrapes Bing top 50 results using Playwright (already in project, zero cost)
+- Compares each published URL against results using normalised URL matching
+- Stores each check as a `RankSnapshot` (position, platform, keyword, timestamp)
+- 30-day history per platform — shows rank trend over time
+
+**Implementation:**
+- `src/lib/rank-tracker.ts` — `checkCampaignRankings()` fetches Bing top 50, checks all URLs, persists snapshots
+- `GET /api/campaigns/[id]/rankings` — latest snapshot + 30-day history per platform
+- `POST /api/campaigns/[id]/rankings` — trigger a live rank check on demand
+- `RankSnapshot` DB model — stores: platform, platformUrl, keyword, engine, rank (Int?), inTop10, inTop50, checkedAt
+
+**Rank display in dashboard:**
+- Best rank across all platforms
+- Per-platform position badge (🥇 Top 10 / Top 50 / Not found)
+- Sparkline trend for last 30 checks per platform
+
+**No paid APIs ever used.** Method: direct Playwright Bing scrape, same UA rotation as SERP scraper.
 
 ### Platform-Specific Rules
 - **dev.to:** Canonical URL = bridge page URL, 5 tags auto-assigned, author bio reused
@@ -452,7 +476,7 @@ Email list compounds: engaged subscribers auto-enrolled in next same-niche campa
 | 4 | 7–8 | All 12 content types, humanization pipeline, detection scoring | All pieces score <15% |
 | 5 | 9–10 | Lead magnet PDF, all 4 bridge templates, exit intent JS, A/B split | Bridge page live, PDF downloads, opt-in works |
 | 6 | 11–12 | Tracking: click recorder, postback handler (4 networks), dedup | Simulated postback → conversion in DB |
-| 7 | 13–14 | Multi-platform publisher, IndexNow, Canvas image generator, sitemap | All 4 platforms have live URLs after launch |
+| 7 | 13–14 | Multi-platform publisher, IndexNow, Canvas image generator, sitemap, Bing rank tracker | All 4 platforms have live URLs; rank check returns position data |
 | 8 | 15–16 | Telegram automation, scheduler, channel registry, directory submit | Post fires at correct time, appears in channel |
 | 9 | 17–18 | Listmonk integration, drip worker, spam check, re-engage sequence | Full 7-email sequence on test opt-in, spam score <2.0 |
 | 10 | 19–20 | Full dashboard, analytics charts, conversion funnel, PWA | All metrics accurate against DB data |

@@ -39,7 +39,7 @@ jobs:
             set -e
             cd /opt/affiliate-castle
             git pull origin main
-            docker compose build app
+            docker compose build app worker
             # Run Prisma migrations before starting app (pinned to v5 — v7 broke schema.prisma url syntax)
             # Use psql directly — more reliable than running prisma CLI in stripped runner image
             docker compose exec -T postgres psql -U affiliate -d affiliatecastle \

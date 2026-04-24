@@ -32,6 +32,9 @@ const SMOKE_SHORT_CODE = 'qo5jgvWA'
 const RUN_ID = Date.now()
 const SMOKE_EMAIL = `smoketest_${RUN_ID}@qa.affiliatecastle.local`
 const SMOKE_TX_ID = `smoke_tx_${RUN_ID}`
+// Per-run unique IP so optin smoke uses a fresh rate-limit bucket each run
+// (avoids 429 when re-running within the 600s window)
+const SMOKE_IP = `10.100.${Math.floor(RUN_ID / 1000 / 256) % 256}.${Math.floor(RUN_ID / 1000) % 256}`
 
 test.describe('Sprint 12 – Production Deploy & E2E Smoke Test', () => {
   // ── 1 ──────────────────────────────────────────────────────────────────────
@@ -97,6 +100,7 @@ test.describe('Sprint 12 – Production Deploy & E2E Smoke Test', () => {
 
   // ── 5 ──────────────────────────────────────────────────────────────────────
   test('smoke: POST /api/t/optin records subscriber (opt-in leg)', async ({ request }) => {
+    // Use per-run IP so repeated runs within 600s don't hit the rate-limit bucket
     const resp = await request.post(`${BASE}/api/t/optin`, {
       data: {
         email: SMOKE_EMAIL,
@@ -104,11 +108,12 @@ test.describe('Sprint 12 – Production Deploy & E2E Smoke Test', () => {
         campaignId: SMOKE_CAMPAIGN_ID,
         shortCode: SMOKE_SHORT_CODE,
       },
+      headers: { 'x-forwarded-for': SMOKE_IP },
     })
     expect(resp.status()).toBe(200)
     const body = await resp.json()
     expect(body.ok).toBe(true)
-    console.log(`[sprint12] Opt-in recorded for ${SMOKE_EMAIL}`)
+    console.log(`[sprint12] Opt-in recorded for ${SMOKE_EMAIL} (ip=${SMOKE_IP})`)
   })
 
   // ── 6 ──────────────────────────────────────────────────────────────────────

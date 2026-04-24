@@ -11,6 +11,9 @@ const STATUS_COLOR: Record<string, string> = {
   brief_ready:        'text-indigo-400',
   content_ready:      'text-emerald-400',
   bridge_ready:       'text-orange-400',
+  publishing:         'text-violet-400',
+  indexed:            'text-sky-400',
+  live:               'text-green-300',
   scrape_failed:      'text-red-400',
   extraction_failed:  'text-red-400',
 }

@@ -31,6 +31,7 @@ import { scoreContent } from '../lib/ai-detector'
 import { renderPDF } from '../lib/pdf-generator'
 import { renderBridgePages } from '../lib/bridge-renderer'
 import { createTrackingLinks } from '../lib/tracking'
+import { publishCampaign } from '../lib/publisher/index'
 import type { OfferPipelineJobData } from '../lib/queue'
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379'
@@ -405,6 +406,39 @@ async function processOfferJob(job: Job<OfferPipelineJobData>) {
 
   await job.updateProgress(100)
   console.log(`[offer-pipeline] Job ${job.id} complete — campaign ${campaignId} is bridge_ready`)
+
+  // -------------------------------------------------------------------------
+  // Sprint 7 — Steps 18–20: Publish to 4 platforms, IndexNow, sitemap
+  // -------------------------------------------------------------------------
+  // Publishing runs AFTER the job reports progress=100 so the UI shows
+  // bridge_ready immediately. The worker continues in background.
+  const baseUrl = process.env.APP_BASE_URL ?? 'http://localhost:3200'
+  const bridgePageUrl = bridgeSlugA
+    ? `${baseUrl}/go/${bridgeSlugA}`
+    : baseUrl
+
+  try {
+    const publishResult = await publishCampaign({
+      campaignId,
+      campaignName: extraction.productName || keyword,
+      niche: extraction.niche || 'general',
+      primaryKeyword: keyword,
+      bridgePageUrl,
+    })
+
+    const publishedCount = publishResult.results.filter((r) => r.success).length
+    console.log(`[offer-pipeline] Sprint 7 — published to ${publishedCount}/4 platforms`)
+
+    // Advance to publishing or indexed depending on how many platforms succeeded
+    if (publishedCount > 0) {
+      await prisma.campaign.update({
+        where: { id: campaignId },
+        data: { status: publishResult.indexNowSubmitted ? 'indexed' : 'publishing' },
+      })
+    }
+  } catch (err) {
+    console.error('[offer-pipeline] Sprint 7 publish failed (non-fatal):', err)
+  }
 
   return {
     offerId,

@@ -7,3 +7,7 @@ public/magnets/
 public/img/generated/
 *.pem
 prisma/dev.db
+
+# Playwright test artifacts
+test-results/
+playwright-report/

@@ -214,7 +214,7 @@ function injectFingerprint(text: string): string {
     // Add parenthetical asides to occasional sentences
     .replace(/\. (The (key|point|thing|answer|issue|problem) is)/g, '. (And honestly,) $1')
     // Natural hedging
-    .replace(/\. (Most people)/g, '. \nHere's the thing. $1')
+    .replace(/\. (Most people)/g, ". \nHere's the thing. $1")
     // Emphasise with italics in markdown
     .replace(/\b(only|never|always|every|none)\b/g, '_$1_')
 }

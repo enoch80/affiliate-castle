@@ -221,9 +221,22 @@ async function processOfferJob(job: Job<OfferPipelineJobData>) {
   console.log(`[offer-pipeline] Sprint 4: generating 12 content pieces for campaign ${campaignId}`)
 
   // Step 10: Generate all 12 content types
+  const offerContext = {
+    productName: extraction.productName || '',
+    niche: extraction.niche || '',
+    angle: extraction.angle || '',
+    targetAudience: (extraction.targetAudience as string[]) || [],
+    painPoints: (extraction.painPoints as string[]) || [],
+    benefits: (extraction.benefits as string[]) || [],
+    trustSignals: (extraction.trustSignals as string[]) || [],
+    hoplink,
+    primaryKeyword: keyword,
+    secondaryKeywords: (extraction.secondaryKeywords as string[]) || [],
+  }
+
   let generatedPieces: import('../lib/content-generator').GeneratedContent[] = []
   try {
-    generatedPieces = await generateAllContent(brief)
+    generatedPieces = await generateAllContent(brief, offerContext)
     console.log(`[offer-pipeline] Sprint 4: generated ${generatedPieces.length} content pieces`)
   } catch (err) {
     console.error('[offer-pipeline] Sprint 4 content generation failed (non-fatal):', err)
@@ -233,7 +246,7 @@ async function processOfferJob(job: Job<OfferPipelineJobData>) {
   const contentPieceIds: string[] = []
   for (const piece of generatedPieces) {
     // Step 11: Humanize
-    const humanizationResult = humanize(piece.contentText, piece.type)
+    const humanizationResult = humanize(piece.text, piece.type)
 
     // Step 12: Score for AI detection
     const detection = scoreContent(humanizationResult.humanized)
@@ -245,7 +258,7 @@ async function processOfferJob(job: Job<OfferPipelineJobData>) {
         campaignId,
         type: piece.type,
         contentText: humanizationResult.humanized,
-        contentHtml: piece.contentHtml,
+        contentHtml: piece.html,
         detectionScore: detection.score,
         status: detection.passesThreshold ? 'ready' : 'needs_revision',
       },

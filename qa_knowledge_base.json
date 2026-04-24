@@ -297,6 +297,61 @@
         "Tunnel: ssh -i ~/.ssh/contabo_key -L 3200:127.0.0.1:3200 root@109.199.106.147 -N -f",
         "Tunnel can drop mid-run — re-establish and re-run if ECONNREFUSED errors appear"
       ]
+    },
+    {
+      "@type": "QAEntry",
+      "sprint": "Sprint 11",
+      "date": "2026-04-24",
+      "commit": "88d2e19",
+      "status": "passed",
+      "description": "Sprint 11 — Security: rate limiting, Zod validation, settings API, FTC disclosure, auth fixes",
+      "regressionTotal": 113,
+      "regressionPassing": 113,
+      "regressionBreakdown": {
+        "sprint1": 16, "sprint2": 8, "sprint3": 9, "sprint4": 10,
+        "sprint5": 9, "sprint6": 7, "sprint7": 9, "sprint8": 9,
+        "sprint9": 11, "sprint10": 10, "sprint11": 10
+      },
+      "securityImplementations": [
+        {
+          "file": "src/lib/rate-limiter.ts",
+          "description": "Token bucket rate limiter — in-process Map, GDPR-safe (uses IP hash), auto-purge every 5 min via setInterval().unref()",
+          "limits": {
+            "click": "60 requests / 60 s per IP",
+            "optin": "5 requests / 600 s per IP"
+          }
+        },
+        {
+          "file": "src/lib/ftc-disclosure.ts",
+          "description": "FTC affiliate disclosure — injectDisclosure(html), appendDisclosure(html), disclosureHtml() helpers; short + long form text constants"
+        },
+        {
+          "file": "src/app/api/campaigns/[id]/rankings/route.ts",
+          "description": "Fixed getServerSession() → getServerSession(authOptions) on both GET and POST handlers; added import { authOptions } from '@/lib/auth'"
+        },
+        {
+          "file": "src/app/api/settings/route.ts",
+          "description": "Replaced placeholder stub with full GET/POST/DELETE. Zod validates platform (enum of 10), username, credentials. encryptCredential() called before storage. GET response never includes credentialsEncrypted. Supported platforms: devto, hashnode, blogger, tumblr, medium, wordpress, ghost, telegram, email, custom."
+        },
+        {
+          "file": "src/app/api/t/click/route.ts",
+          "description": "Added Zod clickSchema (shortCode min/max, optional referrer/utm). Rate limit 60/60s applied via hashIp() identifier. Manual typeof guards replaced with Zod safeParse."
+        },
+        {
+          "file": "src/app/api/t/optin/route.ts",
+          "description": "Added Zod optinSchema (email.max(254), name.max(100), campaignId, shortCode, bridgePageId). Rate limit 5/600s applied. GDPR: subscribedAt = default(now()) is the consent timestamp. isValidEmail() regex removed in favour of z.string().email()."
+        }
+      ],
+      "testFile": "tests/e2e/sprint11.spec.ts",
+      "testCount": 10,
+      "notes": [
+        "rate-limiter.ts uses Array.from(store.entries()) to avoid TS2802 downlevelIteration error (tsconfig has no explicit target)",
+        "PlatformAccount.credentialsEncrypted stores AES-256-GCM output from src/lib/credentials.ts",
+        "PlatformAccount model has no updatedAt field — select uses createdAt for both create/update responses",
+        "96 campaigns in DB at start of Sprint 11 test run",
+        "app rebuilt with --no-cache in docker; affiliate-castle-app-1 Up 23s at run start",
+        "Tunnel: ssh -i ~/.ssh/contabo_key -fNL 3200:127.0.0.1:3200 root@109.199.106.147 -N"
+      ]
     }
   ]
 }

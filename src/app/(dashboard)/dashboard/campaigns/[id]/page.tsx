@@ -10,6 +10,7 @@ const STATUS_COLOR: Record<string, string> = {
   researched:         'text-green-400',
   brief_ready:        'text-indigo-400',
   content_ready:      'text-emerald-400',
+  bridge_ready:       'text-orange-400',
   scrape_failed:      'text-red-400',
   extraction_failed:  'text-red-400',
 }
@@ -50,6 +51,7 @@ function getPipelineIndex(status: string): number {
   if (status === 'researched') return 1
   if (status === 'brief_ready') return 2
   if (status === 'content_ready') return 3
+  if (status === 'bridge_ready') return 4
   if (status === 'bridge_live') return 4
   if (status === 'publishing') return 5
   if (status === 'indexed') return 6
@@ -68,6 +70,8 @@ export default async function CampaignDetailPage({ params }: { params: { id: str
         },
       },
       contentPieces: { orderBy: { createdAt: 'desc' } },
+      bridgePages: { orderBy: { createdAt: 'asc' } },
+      leadMagnets: { orderBy: { createdAt: 'desc' }, take: 1 },
     },
   })
 
@@ -88,10 +92,15 @@ export default async function CampaignDetailPage({ params }: { params: { id: str
   const keywordData = offer?.keywordResearch?.[0]
 
   // Sprint 4 — content pieces (all except brief)
-  const isContentReady = campaign.status === 'content_ready'
+  const isContentReady = ['content_ready', 'bridge_ready', 'bridge_live', 'publishing', 'indexed', 'live'].includes(campaign.status)
   const sprint4Pieces = campaign.contentPieces.filter((p) => p.type !== 'content_brief')
   const passingPieces = sprint4Pieces.filter((p) => p.detectionScore !== null && (p.detectionScore as number) < 15)
   const failingPieces = sprint4Pieces.filter((p) => p.detectionScore !== null && (p.detectionScore as number) >= 15)
+
+  // Sprint 5 — bridge pages
+  const isBridgeReady = ['bridge_ready', 'bridge_live', 'publishing', 'indexed', 'live'].includes(campaign.status)
+  const bridgePages = campaign.bridgePages
+  const leadMagnet = campaign.leadMagnets?.[0] ?? null
 
   const stats = [
     { label: 'Campaign Status', value: campaign.status.toUpperCase(), color: STATUS_COLOR[campaign.status] ?? 'text-slate-300' },
@@ -348,6 +357,68 @@ export default async function CampaignDetailPage({ params }: { params: { id: str
                       <span className="text-slate-500 text-xs">scoring…</span>
                     )}
                   </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Sprint 5 — Bridge Pages */}
+      {isBridgeReady && bridgePages.length > 0 && (
+        <div className="bg-slate-800 border border-orange-700 rounded-xl p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-white">Bridge Pages</h2>
+            <span className="bg-orange-900 text-orange-300 text-xs font-bold px-2 py-0.5 rounded">Sprint 5</span>
+          </div>
+
+          {leadMagnet && (
+            <div className="mb-4 bg-slate-900 rounded-lg p-3 flex items-center gap-3">
+              <span className="text-2xl">📄</span>
+              <div>
+                <div className="text-white text-sm font-medium">{leadMagnet.title}</div>
+                {leadMagnet.pdfPath && (
+                  <a
+                    href={leadMagnet.pdfPath.replace(/.*\/public/, '')}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-orange-400 text-xs hover:underline"
+                  >
+                    Download PDF →
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-3">
+            {bridgePages.map((page) => {
+              const content = page.contentJson as Record<string, string> | null
+              const variant = content?.abVariant ?? '?'
+              const headline = content?.headline ?? '(no headline)'
+              const templateId = content?.templateId ?? page.templateId ?? 'review'
+              const convRate = page.views > 0 ? ((page.optIns / page.views) * 100).toFixed(1) : '0.0'
+              return (
+                <div key={page.id} className="flex items-center justify-between bg-slate-900 rounded-lg px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${variant === 'A' ? 'bg-indigo-900 text-indigo-300' : 'bg-purple-900 text-purple-300'}`}>
+                      {variant}
+                    </span>
+                    <div>
+                      <div className="text-white text-sm font-medium truncate max-w-xs">{headline}</div>
+                      <div className="text-slate-500 text-xs mt-0.5">
+                        {templateId} · {page.views} views · {page.optIns} opt-ins · {convRate}% CVR
+                      </div>
+                    </div>
+                  </div>
+                  <a
+                    href={`/go/${page.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-orange-400 text-sm hover:underline shrink-0"
+                  >
+                    View →
+                  </a>
                 </div>
               )
             })}

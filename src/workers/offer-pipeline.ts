@@ -28,6 +28,8 @@ import { generateContentBrief } from '../lib/content-brief'
 import { generateAllContent } from '../lib/content-generator'
 import { humanize } from '../lib/humanizer'
 import { scoreContent } from '../lib/ai-detector'
+import { renderPDF } from '../lib/pdf-generator'
+import { renderBridgePages } from '../lib/bridge-renderer'
 import type { OfferPipelineJobData } from '../lib/queue'
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379'
@@ -286,8 +288,107 @@ async function processOfferJob(job: Job<OfferPipelineJobData>) {
     data: { status: 'content_ready' },
   })
 
+  // ─── Sprint 5: PDF generation + bridge pages ───────────────────────────
+  await job.updateProgress(92)
+  console.log(`[offer-pipeline] Sprint 5: generating lead magnet PDF + bridge pages for campaign ${campaignId}`)
+
+  let leadMagnetId: string | null = null
+  let leadMagnetUrl = ''
+
+  // Step 14: Render lead_magnet ContentPiece HTML → PDF
+  try {
+    const leadMagnetPiece = await prisma.contentPiece.findFirst({
+      where: { campaignId, type: 'lead_magnet' },
+    })
+
+    if (leadMagnetPiece?.contentHtml || leadMagnetPiece?.contentText) {
+      const html = leadMagnetPiece.contentHtml || leadMagnetPiece.contentText || ''
+      const slug = `lead-magnet-${Date.now()}`
+      const pdfResult = await renderPDF(html, campaignId, slug)
+      console.log(`[offer-pipeline] Sprint 5: PDF rendered → ${pdfResult.publicUrl} (${pdfResult.sizeBytes} bytes)`)
+
+      const savedMagnet = await prisma.leadMagnet.create({
+        data: {
+          campaignId,
+          title: `${extraction.productName || keyword} — Free Guide`,
+          type: 'guide',
+          contentHtml: html,
+          pdfPath: pdfResult.pdfPath,
+        },
+      })
+      leadMagnetId = savedMagnet.id
+      leadMagnetUrl = pdfResult.publicUrl
+    }
+  } catch (err) {
+    console.error('[offer-pipeline] Sprint 5 PDF generation failed (non-fatal):', err)
+  }
+
+  // Step 15: Render bridge page A/B variants
+  let bridgeSlugA = ''
+  let bridgeSlugB = ''
+  try {
+    // Extract headline variants from ContentPiece types
+    const bridgePieceA = await prisma.contentPiece.findFirst({
+      where: { campaignId, type: 'bridge_headline_a' },
+    })
+    const bridgePieceB = await prisma.contentPiece.findFirst({
+      where: { campaignId, type: 'bridge_headline_b' },
+    })
+    const bridgePage = await prisma.contentPiece.findFirst({
+      where: { campaignId, type: 'bridge_page' },
+    })
+
+    const headlineA = bridgePieceA?.contentText?.trim() ||
+      `${extraction.productName}: The ${keyword} Solution You've Been Waiting For`
+    const headlineB = bridgePieceB?.contentText?.trim() ||
+      `Why ${extraction.productName} Is the Best Way to ${keyword}`
+
+    // Parse FAQ block from faq_block ContentPiece if available
+    let faqItems: Array<{ question: string; answer: string }> = []
+    const faqPiece = await prisma.contentPiece.findFirst({
+      where: { campaignId, type: 'faq_block' },
+    })
+    if (faqPiece?.contentText) {
+      try {
+        const parsed = JSON.parse(faqPiece.contentText)
+        if (Array.isArray(parsed)) faqItems = parsed
+      } catch { /* use default */ }
+    }
+
+    const bridgeResult = await renderBridgePages({
+      campaignId,
+      productName: extraction.productName || keyword,
+      niche: extraction.niche || 'general',
+      primaryKeyword: keyword,
+      hoplink,
+      headlineA,
+      headlineB,
+      subHeadline: extraction.angle || `Discover the proven approach to ${keyword}`,
+      angle: extraction.angle || '',
+      benefits: (extraction.benefits as string[]) || [],
+      painPoints: (extraction.painPoints as string[]) || [],
+      trustSignals: (extraction.trustSignals as string[]) || [],
+      faqItems,
+      leadMagnetTitle: `${keyword} — Complete Guide`,
+      leadMagnetUrl: leadMagnetUrl || `/magnets/${campaignId}/guide.pdf`,
+      leadMagnetId,
+    })
+
+    bridgeSlugA = bridgeResult.variantA.slug
+    bridgeSlugB = bridgeResult.variantB.slug
+    console.log(`[offer-pipeline] Sprint 5: bridge pages created — A=/go/${bridgeSlugA} B=/go/${bridgeSlugB}`)
+  } catch (err) {
+    console.error('[offer-pipeline] Sprint 5 bridge render failed (non-fatal):', err)
+  }
+
+  // Step 16: Advance campaign to bridge_ready
+  await prisma.campaign.update({
+    where: { id: campaignId },
+    data: { status: 'bridge_ready' },
+  })
+
   await job.updateProgress(100)
-  console.log(`[offer-pipeline] Job ${job.id} complete — campaign ${campaignId} is content_ready`)
+  console.log(`[offer-pipeline] Job ${job.id} complete — campaign ${campaignId} is bridge_ready`)
 
   return {
     offerId,
@@ -295,8 +396,12 @@ async function processOfferJob(job: Job<OfferPipelineJobData>) {
     productName: extraction.productName,
     briefReady: true,
     contentReady: true,
+    bridgeReady: true,
     piecesGenerated: generatedPieces.length,
     passingDetection: passingCount,
+    leadMagnetUrl,
+    bridgeSlugA,
+    bridgeSlugB,
   }
 }
 

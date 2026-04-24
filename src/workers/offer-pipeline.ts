@@ -33,6 +33,7 @@ import { renderBridgePages } from '../lib/bridge-renderer'
 import { createTrackingLinks } from '../lib/tracking'
 import { publishCampaign } from '../lib/publisher/index'
 import { scheduleTelegramSeries } from '../lib/telegram-scheduler'
+import { scheduleDripSequence } from '../lib/drip-scheduler'
 import type { OfferPipelineJobData } from '../lib/queue'
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379'
@@ -479,6 +480,36 @@ async function processOfferJob(job: Job<OfferPipelineJobData>) {
     console.error('[offer-pipeline] Sprint 8 Telegram schedule failed (non-fatal):', err)
   }
 
+  // -------------------------------------------------------------------------
+  // Sprint 9 — Step 22: Schedule email drip for test opt-in lead (if configured)
+  // -------------------------------------------------------------------------
+  // In production this is triggered per opt-in via the bridge page form handler.
+  // Here we seed a test drip schedule using PIPELINE_TEST_EMAIL env var (if set)
+  // so the full sequence is created and can be validated end-to-end.
+  let emailSequenceId: string | null = null
+  const testEmail = process.env.PIPELINE_TEST_EMAIL
+  if (testEmail) {
+    try {
+      const dripResult = await scheduleDripSequence({
+        campaignId,
+        subscriberEmail: testEmail,
+        subscriberFirstName: 'Tester',
+        campaignName: extraction.productName || keyword,
+        niche: extraction.niche || 'general',
+        primaryKeyword: keyword,
+        bridgePageUrl,
+        leadMagnetUrl: leadMagnetUrl ?? null,
+        senderName: process.env.EMAIL_SENDER_NAME ?? 'Your Guide',
+        physicalAddress: process.env.EMAIL_PHYSICAL_ADDRESS ?? '123 Main St, Anytown, USA',
+        unsubscribeUrl: '{{unsubscribe_url}}',
+      })
+      emailSequenceId = dripResult.sequenceId
+      console.log(`[offer-pipeline] Sprint 9 — email drip queued: ${dripResult.stepsCreated} steps (${dripResult.stepsBlocked} blocked)`)
+    } catch (err) {
+      console.error('[offer-pipeline] Sprint 9 email drip failed (non-fatal):', err)
+    }
+  }
+
   return {
     offerId,
     campaignId,
@@ -493,6 +524,7 @@ async function processOfferJob(job: Job<OfferPipelineJobData>) {
     bridgeSlugB,
     trackingLinksCreated: trackingLinks.length,
     telegramPostsQueued,
+    emailSequenceId,
   }
 }
 

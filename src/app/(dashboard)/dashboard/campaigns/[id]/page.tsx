@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
+import { CampaignSubNav } from './CampaignSubNav'
 
 const STATUS_COLOR: Record<string, string> = {
   draft:              'text-slate-400',
@@ -117,7 +118,7 @@ export default async function CampaignDetailPage({ params }: { params: { id: str
   return (
     <div className="p-8 max-w-5xl">
       {/* Header */}
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex items-start justify-between mb-6">
         <div>
           <div className="flex items-center gap-3 mb-1">
             <Link href="/dashboard/campaigns" className="text-slate-400 hover:text-white text-sm">← Campaigns</Link>
@@ -126,6 +127,9 @@ export default async function CampaignDetailPage({ params }: { params: { id: str
           <p className="text-slate-400 text-sm mt-1 break-all">{offer?.hoplink}</p>
         </div>
       </div>
+
+      {/* Sub-navigation */}
+      <CampaignSubNav campaignId={campaign.id} />
 
       {/* Pipeline Progress Bar */}
       <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 mb-6">

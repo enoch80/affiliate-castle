@@ -1,7 +1,7 @@
 -- Affiliate Castle — Initial Schema Migration
 -- Sprint 2: Full DB setup
 
-CREATE TABLE "Offer" (
+CREATE TABLE IF NOT EXISTS "Offer" (
     "id" TEXT NOT NULL,
     "hoplink" TEXT NOT NULL,
     "resolvedUrl" TEXT,
@@ -18,7 +18,7 @@ CREATE TABLE "Offer" (
     CONSTRAINT "Offer_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE "MarketResearch" (
+CREATE TABLE IF NOT EXISTS "MarketResearch" (
     "id" TEXT NOT NULL,
     "offerId" TEXT NOT NULL,
     "targetAudience" JSONB,
@@ -30,7 +30,7 @@ CREATE TABLE "MarketResearch" (
     CONSTRAINT "MarketResearch_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE "KeywordResearch" (
+CREATE TABLE IF NOT EXISTS "KeywordResearch" (
     "id" TEXT NOT NULL,
     "offerId" TEXT NOT NULL,
     "primaryKeyword" TEXT NOT NULL,
@@ -43,7 +43,7 @@ CREATE TABLE "KeywordResearch" (
     CONSTRAINT "KeywordResearch_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE "Campaign" (
+CREATE TABLE IF NOT EXISTS "Campaign" (
     "id" TEXT NOT NULL,
     "offerId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -56,7 +56,7 @@ CREATE TABLE "Campaign" (
     CONSTRAINT "Campaign_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE "ContentPiece" (
+CREATE TABLE IF NOT EXISTS "ContentPiece" (
     "id" TEXT NOT NULL,
     "campaignId" TEXT NOT NULL,
     "type" TEXT NOT NULL,
@@ -71,7 +71,7 @@ CREATE TABLE "ContentPiece" (
     CONSTRAINT "ContentPiece_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE "LeadMagnet" (
+CREATE TABLE IF NOT EXISTS "LeadMagnet" (
     "id" TEXT NOT NULL,
     "campaignId" TEXT NOT NULL,
     "title" TEXT NOT NULL,
@@ -83,7 +83,7 @@ CREATE TABLE "LeadMagnet" (
     CONSTRAINT "LeadMagnet_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE "BridgePage" (
+CREATE TABLE IF NOT EXISTS "BridgePage" (
     "id" TEXT NOT NULL,
     "campaignId" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
@@ -98,7 +98,7 @@ CREATE TABLE "BridgePage" (
     CONSTRAINT "BridgePage_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE "TrackingLink" (
+CREATE TABLE IF NOT EXISTS "TrackingLink" (
     "id" TEXT NOT NULL,
     "campaignId" TEXT NOT NULL,
     "shortCode" TEXT NOT NULL,
@@ -110,7 +110,7 @@ CREATE TABLE "TrackingLink" (
     CONSTRAINT "TrackingLink_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE "ClickEvent" (
+CREATE TABLE IF NOT EXISTS "ClickEvent" (
     "id" TEXT NOT NULL,
     "trackingLinkId" TEXT NOT NULL,
     "ipHash" TEXT NOT NULL,
@@ -125,7 +125,7 @@ CREATE TABLE "ClickEvent" (
     CONSTRAINT "ClickEvent_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE "Conversion" (
+CREATE TABLE IF NOT EXISTS "Conversion" (
     "id" TEXT NOT NULL,
     "trackingLinkId" TEXT NOT NULL,
     "campaignId" TEXT NOT NULL,
@@ -136,7 +136,7 @@ CREATE TABLE "Conversion" (
     CONSTRAINT "Conversion_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE "EmailSubscriber" (
+CREATE TABLE IF NOT EXISTS "EmailSubscriber" (
     "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "firstName" TEXT,
@@ -149,14 +149,14 @@ CREATE TABLE "EmailSubscriber" (
     CONSTRAINT "EmailSubscriber_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE "EmailSequence" (
+CREATE TABLE IF NOT EXISTS "EmailSequence" (
     "id" TEXT NOT NULL,
     "campaignId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     CONSTRAINT "EmailSequence_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE "EmailSequenceStep" (
+CREATE TABLE IF NOT EXISTS "EmailSequenceStep" (
     "id" TEXT NOT NULL,
     "sequenceId" TEXT NOT NULL,
     "stepNumber" INTEGER NOT NULL,
@@ -170,7 +170,7 @@ CREATE TABLE "EmailSequenceStep" (
     CONSTRAINT "EmailSequenceStep_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE "TelegramChannel" (
+CREATE TABLE IF NOT EXISTS "TelegramChannel" (
     "id" TEXT NOT NULL,
     "botTokenEncrypted" TEXT NOT NULL,
     "channelUsername" TEXT NOT NULL,
@@ -183,7 +183,7 @@ CREATE TABLE "TelegramChannel" (
     CONSTRAINT "TelegramChannel_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE "TelegramPost" (
+CREATE TABLE IF NOT EXISTS "TelegramPost" (
     "id" TEXT NOT NULL,
     "campaignId" TEXT NOT NULL,
     "channelId" TEXT NOT NULL,
@@ -198,7 +198,7 @@ CREATE TABLE "TelegramPost" (
     CONSTRAINT "TelegramPost_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE "PublishJob" (
+CREATE TABLE IF NOT EXISTS "PublishJob" (
     "id" TEXT NOT NULL,
     "campaignId" TEXT NOT NULL,
     "platform" TEXT NOT NULL,
@@ -212,7 +212,7 @@ CREATE TABLE "PublishJob" (
     CONSTRAINT "PublishJob_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE "PlatformAccount" (
+CREATE TABLE IF NOT EXISTS "PlatformAccount" (
     "id" TEXT NOT NULL,
     "platform" TEXT NOT NULL,
     "username" TEXT NOT NULL,
@@ -223,7 +223,7 @@ CREATE TABLE "PlatformAccount" (
     CONSTRAINT "PlatformAccount_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE "DailyAnalytic" (
+CREATE TABLE IF NOT EXISTS "DailyAnalytic" (
     "id" TEXT NOT NULL,
     "campaignId" TEXT NOT NULL,
     "date" TIMESTAMP(3) NOT NULL,
@@ -239,12 +239,12 @@ CREATE TABLE "DailyAnalytic" (
 );
 
 -- Unique constraints
-CREATE UNIQUE INDEX "MarketResearch_offerId_key" ON "MarketResearch"("offerId");
-CREATE UNIQUE INDEX "BridgePage_slug_key" ON "BridgePage"("slug");
-CREATE UNIQUE INDEX "TrackingLink_shortCode_key" ON "TrackingLink"("shortCode");
-CREATE UNIQUE INDEX "Conversion_networkTransactionId_key" ON "Conversion"("networkTransactionId");
-CREATE UNIQUE INDEX "EmailSubscriber_email_key" ON "EmailSubscriber"("email");
-CREATE UNIQUE INDEX "DailyAnalytic_campaignId_date_key" ON "DailyAnalytic"("campaignId", "date");
+CREATE UNIQUE INDEX IF NOT EXISTS "MarketResearch_offerId_key" ON "MarketResearch"("offerId");
+CREATE UNIQUE INDEX IF NOT EXISTS "BridgePage_slug_key" ON "BridgePage"("slug");
+CREATE UNIQUE INDEX IF NOT EXISTS "TrackingLink_shortCode_key" ON "TrackingLink"("shortCode");
+CREATE UNIQUE INDEX IF NOT EXISTS "Conversion_networkTransactionId_key" ON "Conversion"("networkTransactionId");
+CREATE UNIQUE INDEX IF NOT EXISTS "EmailSubscriber_email_key" ON "EmailSubscriber"("email");
+CREATE UNIQUE INDEX IF NOT EXISTS "DailyAnalytic_campaignId_date_key" ON "DailyAnalytic"("campaignId", "date");
 
 -- Foreign keys
 ALTER TABLE "MarketResearch" ADD CONSTRAINT "MarketResearch_offerId_fkey" FOREIGN KEY ("offerId") REFERENCES "Offer"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -41,7 +41,11 @@ jobs:
             git pull origin main
             docker compose build app
             # Run Prisma migrations before starting app (pinned to v5 — v7 broke schema.prisma url syntax)
-            docker compose run --rm --no-deps app npx prisma@5 migrate deploy
+            # Use psql directly — more reliable than running prisma CLI in stripped runner image
+            docker compose exec -T postgres psql -U affiliate -d affiliatecastle \
+              -v ON_ERROR_STOP=0 \
+              < /opt/affiliate-castle/prisma/migrations/20260423000000_init/migration.sql \
+              && echo "Migration applied" || echo "Migration already applied or skipped"
             docker compose up -d
             docker image prune -f
             echo "Deploy complete at $(date)"

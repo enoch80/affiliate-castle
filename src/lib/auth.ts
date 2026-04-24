@@ -40,11 +40,16 @@ export const authOptions: NextAuthOptions = {
         const { email, password } = parsed.data
 
         // Single-owner app: validate against env vars
+        // ADMIN_PASSWORD_HASH_B64 is preferred — it's base64-encoded to avoid
+        // Docker Compose env_file variable interpolation mangling $ in bcrypt hashes
         const adminEmail = process.env.ADMIN_EMAIL
-        const adminHash = process.env.ADMIN_PASSWORD_HASH
+        const rawHash = process.env.ADMIN_PASSWORD_HASH_B64
+          ? Buffer.from(process.env.ADMIN_PASSWORD_HASH_B64, 'base64').toString()
+          : process.env.ADMIN_PASSWORD_HASH
+        const adminHash = rawHash
 
         if (!adminEmail || !adminHash) {
-          console.error('ADMIN_EMAIL or ADMIN_PASSWORD_HASH not configured')
+          console.error('ADMIN_EMAIL or ADMIN_PASSWORD_HASH(_B64) not configured')
           return null
         }
 

@@ -148,7 +148,7 @@ async function processOfferJob(job: Job<OfferPipelineJobData>) {
   await job.updateProgress(85)
   const keyword = extraction.primaryKeyword || extraction.productName || 'affiliate offer'
 
-  let serpResults
+  let serpResults: import('../lib/serp-scraper').SerpResult[] = []
   try {
     serpResults = await scrapeSerpTop10(keyword)
     console.log(`[offer-pipeline] Sprint 3: scraped ${serpResults.length} SERP results`)

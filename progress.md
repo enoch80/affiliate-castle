@@ -15,7 +15,7 @@ The **browser-agent** (`/opt/affiliate-castle/browser-agent-server.js`) is a Pla
 ---
 
 ## Last Updated
-2026-04-26 — Session ended after code fixes and agent runs. Medium/Hashnode blocked by **DNS MX issue** (see below).
+2026-04-26 15:30 — Email forwarding rule removed from Namecheap. MX records still propagating (showing old eforward* on all resolvers). A record mail.digitalfinds.net → 109.199.106.147 confirmed live. Once MX propagates (up to 30 min), run agents from Step 5 below.
 
 ---
 

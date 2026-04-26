@@ -17,6 +17,7 @@ import { publishToDevto } from './devto'
 import { publishToHashnode } from './hashnode'
 import { publishToBlogger } from './blogger'
 import { publishToTumblr } from './tumblr'
+import { publishToMedium } from './medium'
 import { pingIndexNow } from './indexnow'
 import { updateSitemap } from './sitemap'
 import { generateCoverImage } from './image-generator'
@@ -227,6 +228,37 @@ async function runBlogger(input: PublishInput): Promise<PublishPlatformResult> {
   }
 }
 
+async function runMedium(input: PublishInput): Promise<PublishPlatformResult> {
+  const creds = await getPlatformAccount('medium')
+  if (!creds?.integration_token) {
+    return { platform: 'medium', success: false, error: 'No medium account configured' }
+  }
+
+  const piece = await getContentPiece(input.campaignId, 'article_medium')
+  if (!piece) {
+    return { platform: 'medium', success: false, error: 'No article_medium content piece found' }
+  }
+
+  try {
+    const contentHtml = piece.contentHtml ?? (piece.contentText ? `<p>${piece.contentText.replace(/\n\n/g, '</p><p>')}</p>` : '<p></p>')
+    const result = await publishToMedium({
+      integrationToken: creds.integration_token,
+      title: `${input.primaryKeyword} — Complete Guide`,
+      contentHtml,
+      tags: extractKeywords(input.niche, input.primaryKeyword),
+      canonicalUrl: input.bridgePageUrl,
+      publishStatus: 'public',
+    })
+
+    await upsertPublishJob(input.campaignId, 'medium', null, 'published', result.url, null)
+    return { platform: 'medium', success: true, url: result.url }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    await upsertPublishJob(input.campaignId, 'medium', null, 'failed', null, msg)
+    return { platform: 'medium', success: false, error: msg }
+  }
+}
+
 async function runTumblr(input: PublishInput): Promise<PublishPlatformResult> {
   const creds = await getPlatformAccount('tumblr')
   if (!creds?.consumer_key || !creds?.consumer_secret || !creds?.oauth_token || !creds?.oauth_token_secret || !creds?.blog_identifier) {
@@ -302,6 +334,14 @@ export async function publishCampaign(
   results.push(tumblrResult)
   if (tumblrResult.url) publishedUrls.push(tumblrResult.url)
   console.log(`[publisher] tumblr: ${tumblrResult.success ? tumblrResult.url : tumblrResult.error}`)
+
+  await sleep(DELAY_MS)
+
+  // Platform 5: Medium
+  const mediumResult = await runMedium(input)
+  results.push(mediumResult)
+  if (mediumResult.url) publishedUrls.push(mediumResult.url)
+  console.log(`[publisher] medium: ${mediumResult.success ? mediumResult.url : mediumResult.error}`)
 
   // IndexNow ping
   const appDomain = process.env.APP_DOMAIN ?? 'localhost'

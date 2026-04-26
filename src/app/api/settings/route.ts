@@ -23,6 +23,7 @@ const SUPPORTED_PLATFORMS = [
   'blogger',
   'tumblr',
   'medium',
+  'pinterest',
   'wordpress',
   'ghost',
   'telegram',

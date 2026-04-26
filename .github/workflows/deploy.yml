@@ -50,7 +50,6 @@ jobs:
               && echo "Migration applied" || echo "Migration already applied or skipped"
             docker compose up -d
             docker image prune -f
-            nginx -s reload || true
             echo "Deploy complete at $(date)"
           ENDSSH
 
@@ -58,3 +57,4 @@ jobs:
         run: |
           sleep 15
           ssh root@109.199.106.147 "curl -sf http://127.0.0.1:3200/api/health && echo 'Health OK'"
+          ssh root@109.199.106.147 "systemctl reload nginx 2>/dev/null || nginx -s reload 2>/dev/null || true && echo 'Nginx reloaded'"

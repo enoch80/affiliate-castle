@@ -50,6 +50,7 @@ jobs:
               && echo "Migration applied" || echo "Migration already applied or skipped"
             docker compose up -d
             docker image prune -f
+            nginx -s reload || true
             echo "Deploy complete at $(date)"
           ENDSSH
 

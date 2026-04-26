@@ -58,3 +58,7 @@ jobs:
           sleep 15
           ssh root@109.199.106.147 "curl -sf http://127.0.0.1:3200/api/health && echo 'Health OK'"
           ssh root@109.199.106.147 "systemctl reload nginx 2>/dev/null || nginx -s reload 2>/dev/null || true && echo 'Nginx reloaded'"
+          ssh root@109.199.106.147 "docker compose -f /opt/affiliate-castle/docker-compose.yml ps --format 'table {{.Name}}\t{{.Status}}\t{{.Ports}}'"
+          ssh root@109.199.106.147 "docker logs affiliate-castle-app-1 --tail 20 2>&1 || true"
+          ssh root@109.199.106.147 "ss -tlnp | grep 3200 || echo 'WARN: nothing on 3200'"
+          curl -sf https://app.digitalfinds.net/api/health && echo 'Public URL OK' || echo 'WARN: public URL still 502'

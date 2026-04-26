@@ -62,4 +62,6 @@ jobs:
           ssh root@109.199.106.147 "docker logs affiliate-castle-app-1 --tail 20 2>&1 || true"
           ssh root@109.199.106.147 "ss -tlnp | grep 3200 || echo 'WARN: nothing on 3200'"
           ssh root@109.199.106.147 "nginx -T 2>/dev/null | grep -B2 -A10 'proxy_pass\|digitalfinds\|3200' | head -60 || true"
+          ssh root@109.199.106.147 "cat /etc/nginx/sites-enabled/digitalfinds.net 2>/dev/null || cat /etc/nginx/sites-enabled/*.conf 2>/dev/null | head -80 || ls /etc/nginx/conf.d/ 2>/dev/null"
+          ssh root@109.199.106.147 "curl -sf -H 'Host: app.digitalfinds.net' http://127.0.0.1/api/health && echo 'Nginx routing OK' || echo 'Nginx routing FAIL'"
           curl -sf https://app.digitalfinds.net/api/health && echo 'Public URL OK' || echo 'WARN: public URL still 502'

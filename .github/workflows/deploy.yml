@@ -38,6 +38,8 @@ jobs:
           ssh root@109.199.106.147 << 'ENDSSH'
             set -e
             cd /opt/affiliate-castle
+            git reset --hard HEAD
+            git clean -fd
             git pull origin main
             docker compose build app worker
             # Run Prisma migrations before starting app (pinned to v5 — v7 broke schema.prisma url syntax)

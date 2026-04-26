@@ -61,4 +61,5 @@ jobs:
           ssh root@109.199.106.147 "docker compose -f /opt/affiliate-castle/docker-compose.yml ps --format 'table {{.Name}}\t{{.Status}}\t{{.Ports}}'"
           ssh root@109.199.106.147 "docker logs affiliate-castle-app-1 --tail 20 2>&1 || true"
           ssh root@109.199.106.147 "ss -tlnp | grep 3200 || echo 'WARN: nothing on 3200'"
+          ssh root@109.199.106.147 "nginx -T 2>/dev/null | grep -B2 -A10 'proxy_pass\|digitalfinds\|3200' | head -60 || true"
           curl -sf https://app.digitalfinds.net/api/health && echo 'Public URL OK' || echo 'WARN: public URL still 502'

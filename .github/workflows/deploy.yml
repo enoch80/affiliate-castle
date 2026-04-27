@@ -60,11 +60,12 @@ jobs:
 
       - name: Fix nginx SSL for app.digitalfinds.net
         run: |
-          # Detect the certbot ssl cert directory on the server
-          CERT_DIR=$(ssh root@109.199.106.147 "find /etc/letsencrypt/live -name 'fullchain.pem' 2>/dev/null | head -1 | xargs dirname 2>/dev/null || echo '/etc/letsencrypt/live/digitalfinds.net'")
-          echo "SSL cert dir: $CERT_DIR"
-          # Write a high-priority nginx server block that ensures app.digitalfinds.net:443 → port 3200
-          # Uses printf to avoid YAML heredoc issues; \$var escapes nginx variables from local expansion
-          ssh root@109.199.106.147 "printf 'server {\n  listen 443 ssl;\n  http2 on;\n  server_name app.digitalfinds.net;\n  ssl_certificate ${CERT_DIR}/fullchain.pem;\n  ssl_certificate_key ${CERT_DIR}/privkey.pem;\n  add_header X-Frame-Options SAMEORIGIN;\n  add_header X-Content-Type-Options nosniff;\n  add_header Strict-Transport-Security \"max-age=63072000\" always;\n  location / {\n    proxy_pass http://127.0.0.1:3200;\n    proxy_http_version 1.1;\n    proxy_set_header Upgrade \$http_upgrade;\n    proxy_set_header Connection upgrade;\n    proxy_set_header Host \$host;\n    proxy_set_header X-Real-IP \$remote_addr;\n    proxy_set_header X-Forwarded-Proto https;\n    proxy_read_timeout 60s;\n  }\n}\n' > /etc/nginx/conf.d/91-affiliate-castle-ssl.conf && nginx -t && nginx -s reload && echo 'Nginx SSL override applied'"
+          # SCP the committed nginx config to the server (avoids YAML/heredoc issues)
+          scp nginx/sites/app.conf root@109.199.106.147:/etc/nginx/sites-available/affiliate-castle.conf
+          # Enable site (idempotent symlink) and capture any nginx -t errors
+          ssh root@109.199.106.147 "
+            ln -sf /etc/nginx/sites-available/affiliate-castle.conf /etc/nginx/sites-enabled/affiliate-castle.conf
+            nginx -t 2>&1 && nginx -s reload && echo 'Nginx config applied and reloaded' || (nginx -t 2>&1; echo 'nginx -t FAILED — check config above')
+          "
           sleep 2
-          curl -sf https://app.digitalfinds.net/api/health && echo 'Public URL OK' || echo 'WARN: public URL still 502'
+          curl -sf https://app.digitalfinds.net/api/health && echo 'Public URL OK' || echo 'WARN: public URL still 502 after nginx fix'

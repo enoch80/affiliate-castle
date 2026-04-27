@@ -14,6 +14,12 @@ interface StoredAccount {
   createdAt: string
 }
 
+interface PlatformStatus {
+  id: string
+  authType: string
+  ready: boolean
+}
+
 type CardState = 'idle' | 'connecting' | 'testing' | 'disconnecting'
 
 // ── Platform Card ─────────────────────────────────────────────────────────────
@@ -21,10 +27,12 @@ type CardState = 'idle' | 'connecting' | 'testing' | 'disconnecting'
 function PlatformCard({
   config,
   account,
+  ready,
   onRefresh,
 }: {
   config: PlatformEntry
   account: StoredAccount | null
+  ready: boolean
   onRefresh: () => void
 }) {
   const [values, setValues] = useState<Record<string, string>>({})
@@ -269,20 +277,54 @@ function PlatformCard({
 
       {/* OAuth one-click connect button (not yet connected) */}
       {!isConnected && isOAuth && (
-        <button
-          onClick={() => void handleOAuthConnect()}
-          disabled={isLoading}
-          className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white font-semibold text-sm py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2"
-        >
-          {cardState === 'connecting' ? (
-            <>
-              <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              Connecting…
-            </>
+        <>
+          {ready ? (
+            <button
+              onClick={() => void handleOAuthConnect()}
+              disabled={isLoading}
+              className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white font-semibold text-sm py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2"
+            >
+              {cardState === 'connecting' ? (
+                <>
+                  <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Connecting…
+                </>
+              ) : (
+                <>↗ Connect with {config.name}</>
+              )}
+            </button>
           ) : (
-            <>↗ Connect with {config.name}</>
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 space-y-1.5">
+              <p className="text-amber-400 text-xs font-semibold">⚙ Admin setup required</p>
+              <p className="text-amber-300/70 text-xs leading-relaxed">
+                OAuth credentials for {config.name} are not configured on the server.
+                {config.id === 'blogger' && (
+                  <> Create a Google OAuth2 app at{' '}
+                    <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer"
+                      className="underline hover:text-amber-200">
+                      Google Cloud Console
+                    </a>
+                    {' '}and add <code className="font-mono bg-amber-500/20 px-1 rounded">GOOGLE_CLIENT_ID</code> and{' '}
+                    <code className="font-mono bg-amber-500/20 px-1 rounded">GOOGLE_CLIENT_SECRET</code> to the server .env.
+                  </>
+                )}
+                {config.id === 'pinterest' && (
+                  <> Create a Pinterest app at{' '}
+                    <a href="https://developers.pinterest.com/apps/" target="_blank" rel="noopener noreferrer"
+                      className="underline hover:text-amber-200">
+                      Pinterest Developers
+                    </a>
+                    {' '}and add <code className="font-mono bg-amber-500/20 px-1 rounded">PINTEREST_CLIENT_ID</code> and{' '}
+                    <code className="font-mono bg-amber-500/20 px-1 rounded">PINTEREST_CLIENT_SECRET</code> to the server .env.
+                  </>
+                )}
+              </p>
+              <p className="text-amber-300/50 text-xs">
+                Redirect URI: <code className="font-mono bg-amber-500/10 px-1 rounded">https://app.digitalfinds.net/api/auth/oauth/callback</code>
+              </p>
+            </div>
           )}
-        </button>
+        </>
       )}
 
       {/* Manual token connection form */}
@@ -401,14 +443,22 @@ function ConnectionSummary({ accounts }: { accounts: StoredAccount[] }) {
 
 export default function SettingsPage() {
   const [accounts, setAccounts] = useState<StoredAccount[]>([])
+  const [platformsStatus, setPlatformsStatus] = useState<PlatformStatus[]>([])
   const [loading, setLoading] = useState(true)
 
   const loadAccounts = useCallback(async () => {
     try {
-      const res = await fetch('/api/settings')
-      if (res.ok) {
-        const data = (await res.json()) as { accounts?: StoredAccount[] }
+      const [accountsRes, statusRes] = await Promise.all([
+        fetch('/api/settings'),
+        fetch('/api/settings/status'),
+      ])
+      if (accountsRes.ok) {
+        const data = (await accountsRes.json()) as { accounts?: StoredAccount[] }
         setAccounts(data.accounts ?? [])
+      }
+      if (statusRes.ok) {
+        const data = (await statusRes.json()) as { platforms?: PlatformStatus[] }
+        setPlatformsStatus(data.platforms ?? [])
       }
     } catch {
       // silently fail — user will see "Not connected" for all platforms
@@ -423,6 +473,12 @@ export default function SettingsPage() {
 
   function getAccount(platformId: string): StoredAccount | null {
     return accounts.find((a) => a.platform === platformId) ?? null
+  }
+
+  function getPlatformReady(platformId: string): boolean {
+    const status = platformsStatus.find((s) => s.id === platformId)
+    // Default to true if status not loaded yet — the API call will validate
+    return status?.ready ?? true
   }
 
   return (
@@ -451,6 +507,7 @@ export default function SettingsPage() {
                 key={config.id}
                 config={config}
                 account={getAccount(config.id)}
+                ready={getPlatformReady(config.id)}
                 onRefresh={loadAccounts}
               />
             ))}

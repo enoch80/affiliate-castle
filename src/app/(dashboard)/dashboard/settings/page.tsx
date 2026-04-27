@@ -1,6 +1,7 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { PLATFORM_REGISTRY, type PlatformEntry } from '@/lib/platform-registry'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -13,126 +14,7 @@ interface StoredAccount {
   createdAt: string
 }
 
-interface FieldDef {
-  key: string
-  label: string
-  type: 'text' | 'password'
-  placeholder?: string
-  required?: boolean
-}
-
-interface PlatformConfig {
-  id: string
-  name: string
-  description: string
-  docUrl: string
-  fields: FieldDef[]
-  note?: string
-}
-
 type CardState = 'idle' | 'connecting' | 'testing' | 'disconnecting'
-
-// ── Platform Definitions ──────────────────────────────────────────────────────
-
-const PLATFORMS: PlatformConfig[] = [
-  {
-    id: 'devto',
-    name: 'dev.to',
-    description: 'Free developer blogging — highest DA, great organic reach',
-    docUrl: 'https://dev.to/settings/account',
-    fields: [
-      { key: 'api_key', label: 'API Key', type: 'password', placeholder: 'wr8…', required: true },
-    ],
-  },
-  {
-    id: 'hashnode',
-    name: 'Hashnode',
-    description: 'Tech blogging with strong community amplification',
-    docUrl: 'https://hashnode.com/settings/developer',
-    fields: [
-      {
-        key: 'api_token',
-        label: 'Personal Access Token',
-        type: 'password',
-        placeholder: 'Token from Settings → Developer',
-        required: true,
-      },
-    ],
-    note: 'Publication ID is auto-discovered from your token — no extra step needed.',
-  },
-  {
-    id: 'medium',
-    name: 'Medium',
-    description: 'Largest content platform — massive built-in audience',
-    docUrl: 'https://medium.com/settings/security',
-    fields: [
-      {
-        key: 'integration_token',
-        label: 'Integration Token',
-        type: 'password',
-        placeholder: 'Token from Settings → Security → Integration tokens',
-        required: true,
-      },
-    ],
-  },
-  {
-    id: 'tumblr',
-    name: 'Tumblr',
-    description: 'Viral-friendly microblog — no affiliate restrictions',
-    docUrl: 'https://www.tumblr.com/oauth/apps',
-    fields: [
-      { key: 'consumer_key', label: 'Consumer Key', type: 'password', required: true },
-      { key: 'consumer_secret', label: 'Consumer Secret', type: 'password', required: true },
-      { key: 'oauth_token', label: 'OAuth Token', type: 'password', required: true },
-      { key: 'oauth_token_secret', label: 'OAuth Token Secret', type: 'password', required: true },
-      {
-        key: 'blog_identifier',
-        label: 'Blog Identifier',
-        type: 'text',
-        placeholder: 'myblog.tumblr.com',
-        required: true,
-      },
-    ],
-  },
-  {
-    id: 'blogger',
-    name: 'Blogger',
-    description: 'Google-owned platform — PageRank authority',
-    docUrl: 'https://developers.google.com/oauthplayground/',
-    fields: [
-      {
-        key: 'access_token',
-        label: 'OAuth2 Access Token',
-        type: 'password',
-        placeholder: 'ya29.…',
-        required: true,
-      },
-      {
-        key: 'blog_id',
-        label: 'Blog ID',
-        type: 'text',
-        placeholder: 'Auto-discovered if left blank',
-        required: false,
-      },
-    ],
-    note: 'Get token: Google OAuth Playground → select Blogger API v3 → Authorize APIs → Exchange code. Token valid 1h.',
-  },
-  {
-    id: 'pinterest',
-    name: 'Pinterest',
-    description: 'Visual discovery engine — high buyer intent traffic',
-    docUrl: 'https://developers.pinterest.com/',
-    fields: [
-      {
-        key: 'access_token',
-        label: 'Access Token',
-        type: 'password',
-        placeholder: 'pina_…',
-        required: true,
-      },
-    ],
-  },
-]
 
 // ── Platform Card ─────────────────────────────────────────────────────────────
 
@@ -141,7 +23,7 @@ function PlatformCard({
   account,
   onRefresh,
 }: {
-  config: PlatformConfig
+  config: PlatformEntry
   account: StoredAccount | null
   onRefresh: () => void
 }) {
@@ -149,6 +31,7 @@ function PlatformCard({
   const [cardState, setCardState] = useState<CardState>('idle')
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [showForm, setShowForm] = useState(!account)
+  const popupRef = useRef<Window | null>(null)
 
   useEffect(() => {
     setShowForm(!account)
@@ -159,8 +42,53 @@ function PlatformCard({
     setValues((v) => ({ ...v, [key]: val }))
   }
 
+  // ── OAuth popup connect ──────────────────────────────────────────────────────
+  async function handleOAuthConnect() {
+    setCardState('connecting')
+    setMessage(null)
+    try {
+      const res = await fetch(`/api/auth/oauth/start?platform=${config.id}`)
+      if (!res.ok) {
+        const err = (await res.json()) as { error?: string }
+        setMessage({ type: 'error', text: err.error ?? 'Could not start OAuth flow.' })
+        setCardState('idle')
+        return
+      }
+      const data = (await res.json()) as { authType: string; url?: string; error?: string }
+      if (!data.url) {
+        setMessage({ type: 'error', text: data.error ?? 'No authorization URL returned.' })
+        setCardState('idle')
+        return
+      }
+      const left = Math.round(window.screen.width / 2 - 280)
+      const top = Math.round(window.screen.height / 2 - 340)
+      const popup = window.open(data.url, 'oauth_connect', `width=560,height=680,left=${left},top=${top}`)
+      popupRef.current = popup
+      const handler = (e: MessageEvent) => {
+        if (e.origin !== window.location.origin) return
+        const msg = e.data as { ok?: boolean; platform?: string; username?: string; error?: string }
+        if (msg.platform !== config.id) return
+        window.removeEventListener('message', handler)
+        popupRef.current?.close()
+        popupRef.current = null
+        setCardState('idle')
+        if (msg.ok) {
+          setMessage({ type: 'success', text: `Connected as ${msg.username ?? config.id}` })
+          onRefresh()
+        } else {
+          setMessage({ type: 'error', text: msg.error ?? 'OAuth authorisation failed.' })
+        }
+      }
+      window.addEventListener('message', handler)
+    } catch {
+      setMessage({ type: 'error', text: 'Network error — please try again.' })
+      setCardState('idle')
+    }
+  }
+
+  // ── Manual token connect ─────────────────────────────────────────────────────
   async function handleConnect() {
-    const missing = config.fields.filter((f) => f.required && !values[f.key]?.trim())
+    const missing = (config.manual?.fields ?? []).filter((f) => f.required && !values[f.key]?.trim())
     if (missing.length > 0) {
       setMessage({ type: 'error', text: `Fill in: ${missing.map((f) => f.label).join(', ')}` })
       return
@@ -267,6 +195,7 @@ function PlatformCard({
 
   const isLoading = cardState !== 'idle'
   const isConnected = !!account && !showForm
+  const isOAuth = config.authType === 'oauth2' || config.authType === 'oauth1'
 
   return (
     <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6">
@@ -310,13 +239,23 @@ function PlatformCard({
             >
               {cardState === 'testing' ? 'Testing…' : 'Test Connection'}
             </button>
-            <button
-              onClick={() => { setShowForm(true); setMessage(null) }}
-              disabled={isLoading}
-              className="px-3 py-1.5 text-xs font-medium bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg transition-colors disabled:opacity-50"
-            >
-              Update Credentials
-            </button>
+            {isOAuth ? (
+              <button
+                onClick={() => void handleOAuthConnect()}
+                disabled={isLoading}
+                className="px-3 py-1.5 text-xs font-medium bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {cardState === 'connecting' ? 'Reconnecting…' : 'Reconnect'}
+              </button>
+            ) : (
+              <button
+                onClick={() => { setShowForm(true); setMessage(null) }}
+                disabled={isLoading}
+                className="px-3 py-1.5 text-xs font-medium bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg transition-colors disabled:opacity-50"
+              >
+                Update Credentials
+              </button>
+            )}
             <button
               onClick={handleDisconnect}
               disabled={isLoading}
@@ -328,10 +267,28 @@ function PlatformCard({
         </div>
       )}
 
-      {/* Connection form */}
-      {(!isConnected || showForm) && (
+      {/* OAuth one-click connect button (not yet connected) */}
+      {!isConnected && isOAuth && (
+        <button
+          onClick={() => void handleOAuthConnect()}
+          disabled={isLoading}
+          className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white font-semibold text-sm py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2"
+        >
+          {cardState === 'connecting' ? (
+            <>
+              <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              Connecting…
+            </>
+          ) : (
+            <>↗ Connect with {config.name}</>
+          )}
+        </button>
+      )}
+
+      {/* Manual token connection form */}
+      {(!isConnected || showForm) && !isOAuth && (
         <div className="space-y-3">
-          {config.fields.map((field) => (
+          {(config.manual?.fields ?? []).map((field) => (
             <div key={field.key}>
               <label className="block text-xs font-medium text-slate-300 mb-1">
                 {field.label}
@@ -352,9 +309,9 @@ function PlatformCard({
             </div>
           ))}
 
-          {config.note && (
+          {config.manual?.note && (
             <p className="text-xs text-amber-400/80 bg-amber-400/10 border border-amber-400/20 rounded-lg px-3 py-2 leading-relaxed">
-              💡 {config.note}
+              💡 {config.manual.note}
             </p>
           )}
 
@@ -382,7 +339,7 @@ function PlatformCard({
               </button>
             )}
             <a
-              href={config.docUrl}
+              href={config.manual?.docUrl ?? '#'}
               target="_blank"
               rel="noopener noreferrer"
               className="px-3 py-2 text-xs text-indigo-400 hover:text-indigo-300 transition-colors whitespace-nowrap"
@@ -412,12 +369,12 @@ function PlatformCard({
 // ── Summary bar ───────────────────────────────────────────────────────────────
 
 function ConnectionSummary({ accounts }: { accounts: StoredAccount[] }) {
-  const connected = PLATFORMS.filter((p) => accounts.some((a) => a.platform === p.id)).length
-  const total = PLATFORMS.length
+  const connected = PLATFORM_REGISTRY.filter((p) => accounts.some((a) => a.platform === p.id)).length
+  const total = PLATFORM_REGISTRY.length
   return (
     <div className="flex items-center gap-3 bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 mb-6">
       <div className="flex gap-1">
-        {PLATFORMS.map((p) => {
+        {PLATFORM_REGISTRY.map((p) => {
           const isConn = accounts.some((a) => a.platform === p.id)
           return (
             <div
@@ -472,13 +429,13 @@ export default function SettingsPage() {
     <div className="p-4 sm:p-8 max-w-3xl">
       <h1 className="text-2xl font-bold text-white mb-1">Platform Connections</h1>
       <p className="text-slate-400 mb-6 text-sm">
-        Connect publishing platforms. Credentials are verified live then stored AES-256-GCM
-        encrypted. One click to connect, test, or disconnect.
+        Connect publishing platforms. OAuth platforms connect with one click — no copy-pasting tokens.
+        Credentials are stored AES-256-GCM encrypted.
       </p>
 
       {loading ? (
         <div className="space-y-4">
-          {PLATFORMS.map((p) => (
+          {PLATFORM_REGISTRY.map((p) => (
             <div
               key={p.id}
               className="bg-slate-800 border border-slate-700 rounded-2xl h-24 animate-pulse"
@@ -489,7 +446,7 @@ export default function SettingsPage() {
         <>
           <ConnectionSummary accounts={accounts} />
           <div className="space-y-4">
-            {PLATFORMS.map((config) => (
+            {PLATFORM_REGISTRY.map((config) => (
               <PlatformCard
                 key={config.id}
                 config={config}

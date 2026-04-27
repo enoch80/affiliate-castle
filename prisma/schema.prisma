@@ -239,6 +239,7 @@ model PlatformAccount {
   username            String
   credentialsEncrypted String
   isActive            Boolean   @default(true)
+  tokenExpiresAt      DateTime?
   lastUsedAt          DateTime?
   createdAt           DateTime  @default(now())
 }

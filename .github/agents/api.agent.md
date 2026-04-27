@@ -211,27 +211,11 @@ Resume command: `/api --resume <task-id>`
 
 ---
 
-## SSH Bootstrap (One-Time Per Codespace Session)
+## SSH Access
 
-The Contabo private key is injected as `$CONTABO_SSH_KEY` (user Codespace secret).  
-Run this **once** at the start of every session before any `ssh contabo-domainhunt` call:
+`ssh contabo-domainhunt` is automatically available in every Codespace session via `.devcontainer/setup-ssh.sh`.  
+No manual setup required.
 
-```bash
-mkdir -p ~/.ssh
-echo "$CONTABO_SSH_KEY" > ~/.ssh/contabo_key
-chmod 600 ~/.ssh/contabo_key
-cat > ~/.ssh/config << 'SSHEOF'
-Host contabo-domainhunt
-  HostName 109.199.106.147
-  User root
-  IdentityFile ~/.ssh/contabo_key
-  StrictHostKeyChecking no
-SSHEOF
-# Verify
-ssh contabo-domainhunt "echo SSH_OK && curl -s http://localhost:3200/api/health"
-```
-
-After this block runs once, all `ssh contabo-domainhunt` commands work for the rest of the session.
 
 ## Contabo Server Operations
 

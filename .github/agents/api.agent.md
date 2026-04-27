@@ -18,9 +18,9 @@ You have full permanent SSH access to the Contabo production server and an embed
 ## Runtime Identity
 
 - **Stack:** Next.js · Node.js 20 · TypeScript
-- **Production target:** Contabo `109.199.106.147` · project `/opt/domain-hunt-standalone` · app port `3101`
+- **Production target:** Contabo `109.199.106.147` · project `/opt/affiliate-castle` · app port `3200`
 - **SSH alias:** `ssh contabo-domainhunt`
-- **Audit log:** `ssh contabo-domainhunt "echo '...' >> /opt/domain-hunt-standalone/migration_audit.log"`
+- **Audit log:** `ssh contabo-domainhunt "echo '...' >> /opt/affiliate-castle/migration_audit.log"`
 - **Local Postgres/PostgREST:** `ssh -L 3001:127.0.0.1:3001 contabo-domainhunt -N`
 - **Repository:** `/workspaces/domain-hunt-standalone`
 
@@ -78,7 +78,7 @@ Before writing a single line of code:
 1. Read the relevant source files, existing API routes, TypeScript types, and environment config.
 2. Check `qa_knowledge_base.json` for prior failures on the same integration.
 3. Identify the target API spec (internal route or external provider).
-4. Confirm Contabo runtime health: `ssh contabo-domainhunt "docker ps && curl -s http://localhost:3101/api/health"`.
+4. Confirm Contabo runtime health: `ssh contabo-domainhunt "docker ps && curl -s http://localhost:3200/api/health"`.
 5. Initialize watchdog state.
 
 ---
@@ -149,7 +149,7 @@ Before writing a single line of code:
 2. Search repository codebase for existing usage patterns of the same provider.
 3. Check `qa_knowledge_base.json` and `memory/` for prior findings.
 4. Inspect `package.json` for SDK version; check changelog for breaking changes since last known good version.
-5. Query Contabo server logs for the same error pattern: `ssh contabo-domainhunt "grep -r 'error-pattern' /opt/domain-hunt-standalone/logs/"`.
+5. Query Contabo server logs for the same error pattern: `ssh contabo-domainhunt "grep -r 'error-pattern' /opt/affiliate-castle/logs/"`.
 6. Document every Hidden Requirement discovered:
    - Network boundaries (IP whitelist, VPC)
    - Mandatory custom headers
@@ -172,7 +172,7 @@ Before declaring an integration "Done":
 1. **Static analysis:** run `npx tsc --noEmit` and `npx eslint src/` — zero new errors allowed.
 2. **Contract validation:** validate API response shape against the TypeScript type definitions.
 3. **Runtime check:** hit the live route and verify the expected HTTP status and response body.
-4. **Contabo end-to-end:** `ssh contabo-domainhunt "curl -s http://localhost:3101/<route>"` — confirm production behavior matches local.
+4. **Contabo end-to-end:** `ssh contabo-domainhunt "curl -s http://localhost:3200/<route>"` — confirm production behavior matches local.
 5. **Cross-service check:** confirm no dependent routes or workers are broken.
 6. **Audit log:** write success entry to Contabo audit log.
 7. **Knowledge persist:** update `qa_knowledge_base.json` with integration outcome.
@@ -209,22 +209,46 @@ Resume command: `/api --resume <task-id>`
 
 ---
 
+---
+
+## SSH Bootstrap (One-Time Per Codespace Session)
+
+The Contabo private key is injected as `$CONTABO_SSH_KEY` (user Codespace secret).  
+Run this **once** at the start of every session before any `ssh contabo-domainhunt` call:
+
+```bash
+mkdir -p ~/.ssh
+echo "$CONTABO_SSH_KEY" > ~/.ssh/contabo_key
+chmod 600 ~/.ssh/contabo_key
+cat > ~/.ssh/config << 'SSHEOF'
+Host contabo-domainhunt
+  HostName 109.199.106.147
+  User root
+  IdentityFile ~/.ssh/contabo_key
+  StrictHostKeyChecking no
+SSHEOF
+# Verify
+ssh contabo-domainhunt "echo SSH_OK && curl -s http://localhost:3200/api/health"
+```
+
+After this block runs once, all `ssh contabo-domainhunt` commands work for the rest of the session.
+
 ## Contabo Server Operations
 
 All production-touching operations go through the SSH alias.
 
 ```bash
 # Health check
-ssh contabo-domainhunt "curl -s http://localhost:3101/api/health | jq ."
+ssh contabo-domainhunt "curl -s http://localhost:3200/api/health | jq ."
 
 # View live app logs
 ssh contabo-domainhunt "docker logs domain-hunt --tail 50 2>&1"
 
 # Execute a remote command safely
-ssh contabo-domainhunt "cd /opt/domain-hunt-standalone && <command>"
+ssh contabo-domainhunt "cd /opt/affiliate-castle && <command>"
 
 # Audit log entry
-ssh contabo-domainhunt "echo '[api-agent] $(date -u +%Y-%m-%dT%H:%M:%SZ) <entry>' >> /opt/domain-hunt-standalone/migration_audit.log"
+ssh contabo-domainhunt "echo '[api-agent] $(date -u +%Y-%m-%dT%H:%M:%SZ) <entry>' >> /opt/affiliate-castle/migration_audit.log"
 
 # PostgREST tunnel (leave running in background for local DB calls)
 ssh -L 3001:127.0.0.1:3001 contabo-domainhunt -N &

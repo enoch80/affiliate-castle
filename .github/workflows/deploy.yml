@@ -64,6 +64,8 @@ jobs:
           scp nginx/sites/app.conf root@109.199.106.147:/etc/nginx/sites-available/affiliate-castle.conf
           # Enable site (idempotent symlink) and capture any nginx -t errors
           ssh root@109.199.106.147 "
+            # Clean up any leftover conf.d override from previous deploy attempts
+            rm -f /etc/nginx/conf.d/91-affiliate-castle-ssl.conf
             ln -sf /etc/nginx/sites-available/affiliate-castle.conf /etc/nginx/sites-enabled/affiliate-castle.conf
             nginx -t 2>&1 && nginx -s reload && echo 'Nginx config applied and reloaded' || (nginx -t 2>&1; echo 'nginx -t FAILED — check config above')
           "

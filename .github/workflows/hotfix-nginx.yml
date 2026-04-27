@@ -1,0 +1,33 @@
+name: Hotfix nginx proxy
+
+on:
+  workflow_dispatch:
+
+jobs:
+  hotfix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.CONTABO_SSH_KEY }}
+
+      - name: Add server to known hosts
+        run: ssh-keyscan -H 109.199.106.147 >> ~/.ssh/known_hosts
+
+      - name: Patch domainhunt_proxy and restart
+        run: |
+          ssh root@109.199.106.147 "
+            # 1. Connect affiliate-castle network so container DNS resolves inside proxy
+            docker network connect affiliate-castle_default domainhunt_proxy 2>/dev/null || true
+            # 2. Patch host.docker.internal (Mac/Win) → affiliate-castle-app-1 (Linux Docker DNS)
+            sed -i 's|proxy_pass http://host.docker.internal:3200;|proxy_pass http://affiliate-castle-app-1:3200;|g' /opt/domain-hunt-release/nginx.conf
+            grep 'proxy_pass.*3200' /opt/domain-hunt-release/nginx.conf
+            # 3. Restart proxy so nginx re-resolves upstream with current container IP
+            docker restart domainhunt_proxy
+            echo 'Proxy restarted — waiting for nginx to come up'
+          "
+          sleep 8
+          curl -sf https://app.digitalfinds.net/api/health && echo 'PUBLIC URL OK' || echo 'STILL FAILING'

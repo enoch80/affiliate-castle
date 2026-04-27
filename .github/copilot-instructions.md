@@ -1,16 +1,36 @@
 # Global Tech Stack Rules
-- Next.js
+- Next.js 14
 - Node.js 20
 - TypeScript
+- Prisma 5
+- BullMQ + Redis
+- Playwright
 
 ## Contabo Server Access (QA & API Automation)
-For QA, API orchestration, and runtime operations, permanent SSH access to the active production server is configured:
+For QA, API orchestration, and runtime operations, permanent SSH access to the production server is configured:
 
 - **Host Alias:** `ssh contabo-domainhunt`
 - **Server:** `109.199.106.147`
 - **User:** `root`
-- **Project Path:** `/opt/domain-hunt-standalone`
-- **Config:** `~/.ssh/config` (host alias setup)
+- **Project Path:** `/opt/affiliate-castle`
+- **App Port:** `3200`
+- **App URL:** `https://app.digitalfinds.net`
+- **Tracking domain:** `t.digitalfinds.net`
+
+### SSH Bootstrap (run once per Codespace session before any ssh command)
+The private key is available as `$CONTABO_SSH_KEY` (user Codespace secret).
+```bash
+mkdir -p ~/.ssh
+echo "$CONTABO_SSH_KEY" > ~/.ssh/contabo_key
+chmod 600 ~/.ssh/contabo_key
+cat > ~/.ssh/config << 'EOF'
+Host contabo-domainhunt
+  HostName 109.199.106.147
+  User root
+  IdentityFile ~/.ssh/contabo_key
+  StrictHostKeyChecking no
+EOF
+```
 
 ### Usage Examples
 ```bash
@@ -20,31 +40,25 @@ ssh contabo-domainhunt
 # Remote command execution
 ssh contabo-domainhunt "docker ps"
 
-# Health check
-ssh contabo-domainhunt "curl -s http://localhost:3101/api/health | jq ."
+# Health check (affiliate-castle)
+ssh contabo-domainhunt "curl -s http://localhost:3200/api/health"
 
-# PostgREST tunnel for local development
-ssh -L 3001:127.0.0.1:3001 contabo-domainhunt -N
+# All services
+ssh contabo-domainhunt "cd /opt/affiliate-castle && docker compose ps"
+
+# App logs
+ssh contabo-domainhunt "docker logs affiliate-castle-app-1 --tail 50 2>&1"
+
+# Local tunnel (access prod DB/API locally on port 3200)
+ssh -fNL 3200:127.0.0.1:3200 contabo-domainhunt
 
 # Audit log entry
-ssh contabo-domainhunt "echo '[agent] $(date -u +%Y-%m-%dT%H:%M:%SZ) <entry>' >> /opt/domain-hunt-standalone/migration_audit.log"
+ssh contabo-domainhunt "echo '[agent] $(date -u +%Y-%m-%dT%H:%M:%SZ) <entry>' >> /opt/affiliate-castle/migration_audit.log"
 ```
 
 ### Runtime Workflows
 When executing server operations, agents should:
-1. Use `ssh contabo-domainhunt` for all remote commands.
-2. Log major actions to `/opt/domain-hunt-standalone/migration_audit.log` on the server.
-3. Update `qa_knowledge_base.json` with results after each major milestone.
-
-## Permanent Runtime Direction (Server-Only)
-- The application runs on the Contabo server at `109.199.106.147`, port `3101`.
-- Treat the Contabo deployment as the source of truth for runtime QA and operations.
-- Prioritize server-local Postgres/PostgREST and direct runtime validation.
-
-## API Agent — 3SR Protocol
-The `/api` agent implements the Three-Strike and Research (3SR) self-healing protocol.
-- Watchdog script: `npx ts-node scripts/api-watchdog.ts`
-- State file: `tmp/api-watchdog-state.json`
-- Always initialize the watchdog before starting any API integration task.
-- Phase order: CONTEXT → STRIKE_1 → STRIKE_2 → STRIKE_3 → RESEARCH → VALIDATION → DONE
-- Hard walls require human intervention — never loop past them silently.
+1. Run the SSH Bootstrap block above first if `~/.ssh/contabo_key` does not exist.
+2. Use `ssh contabo-domainhunt` for all remote commands.
+3. Log major actions to `/opt/affiliate-castle/migration_audit.log`.
+4. Update `qa_knowledge_base.json` with results after each major milestone.

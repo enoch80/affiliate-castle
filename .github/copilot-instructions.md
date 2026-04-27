@@ -17,20 +17,8 @@ For QA, API orchestration, and runtime operations, permanent SSH access to the p
 - **App URL:** `https://app.digitalfinds.net`
 - **Tracking domain:** `t.digitalfinds.net`
 
-### SSH Bootstrap (run once per Codespace session before any ssh command)
-The private key is available as `$CONTABO_SSH_KEY` (user Codespace secret).
-```bash
-mkdir -p ~/.ssh
-echo "$CONTABO_SSH_KEY" > ~/.ssh/contabo_key
-chmod 600 ~/.ssh/contabo_key
-cat > ~/.ssh/config << 'EOF'
-Host contabo-domainhunt
-  HostName 109.199.106.147
-  User root
-  IdentityFile ~/.ssh/contabo_key
-  StrictHostKeyChecking no
-EOF
-```
+### SSH Setup
+Automatic — `.devcontainer/setup-ssh.sh` runs on every Codespace start and configures `~/.ssh/contabo_key` from the `$CONTABO_SSH_KEY` Codespace secret. `ssh contabo-domainhunt` works immediately in every terminal.
 
 ### Usage Examples
 ```bash

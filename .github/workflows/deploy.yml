@@ -70,13 +70,16 @@ jobs:
             nginx -t 2>&1 && (pkill -HUP nginx || service nginx reload 2>/dev/null || systemctl restart nginx 2>/dev/null) && echo 'Nginx config applied and reloaded' || (nginx -t 2>&1; echo 'nginx -t FAILED — check config above')
           "
           sleep 5
-          # Diagnose: find the Docker container that owns port 443
+          # Inspect domainhunt_proxy and add app.digitalfinds.net vhost
           ssh root@109.199.106.147 "
-            echo '=== container on port 443 ===';
-            docker ps --format 'NAME={{.Names}} PORTS={{.Ports}} IMAGE={{.Image}}' | grep ':443->';
-            echo '=== all containers with their ports ===';
-            docker ps --format '{{.Names}}\t{{.Ports}}' | head -20;
-            echo '=== port 3200 check ===';
-            curl -sf http://127.0.0.1:3200/api/health -o /dev/null -w '3200_CODE=%{http_code}' && echo '' || echo 'PORT_3200_FAILED';
+            echo '=== domainhunt_proxy mounts ===';
+            docker inspect domainhunt_proxy --format '{{json .Mounts}}' | python3 -c 'import sys,json; [print(m[\"Source\"],\"->\",m[\"Destination\"]) for m in json.load(sys.stdin)]' 2>/dev/null || echo 'inspect failed';
+            echo '=== certs accessible in proxy ===';
+            docker exec domainhunt_proxy ls /etc/letsencrypt/live/ 2>/dev/null || echo 'no letsencrypt in proxy';
+            echo '=== nginx conf.d in proxy ===';
+            docker exec domainhunt_proxy ls /etc/nginx/conf.d/ 2>/dev/null || echo 'no conf.d';
+            echo '=== nginx.conf includes ===';
+            docker exec domainhunt_proxy cat /etc/nginx/nginx.conf 2>/dev/null | grep include || echo 'no includes';
           "
+          curl -sf https://app.digitalfinds.net/api/health && echo 'Public URL OK' || echo 'WARN: public URL still 502 after nginx fix'
           curl -sf https://app.digitalfinds.net/api/health && echo 'Public URL OK' || echo 'WARN: public URL still 502 after nginx fix'

@@ -60,26 +60,14 @@ jobs:
 
       - name: Fix nginx SSL for app.digitalfinds.net
         run: |
-          # Patch domainhunt_proxy: fix host.docker.internal (doesn't resolve on Linux) → container name
-          # Also ensure the affiliate-castle_default network is connected so container name resolves
           ssh root@109.199.106.147 "
-            # Connect affiliate-castle_default network to proxy (idempotent)
+            # 1. Ensure affiliate-castle network is attached so container DNS works in proxy
             docker network connect affiliate-castle_default domainhunt_proxy 2>/dev/null || true
-            # Fix upstream: host.docker.internal → affiliate-castle-app-1 (Docker DNS on Linux)
+            # 2. Patch host.docker.internal (Mac/Win only) → container name (Linux Docker DNS)
             sed -i 's|proxy_pass http://host.docker.internal:3200;|proxy_pass http://affiliate-castle-app-1:3200;|g' /opt/domain-hunt-release/nginx.conf
-            # Verify the patch
-            echo 'proxy_pass line:'; grep 'proxy_pass.*3200' /opt/domain-hunt-release/nginx.conf
-            # Reload proxy nginx
-            docker exec domainhunt_proxy nginx -t 2>&1 && docker exec domainhunt_proxy nginx -s reload && echo 'Proxy reloaded OK' || echo 'Proxy FAILED'
+            # 3. Restart proxy so nginx re-resolves upstream DNS with new container IP
+            docker restart domainhunt_proxy
+            echo 'Proxy restarted OK'
           "
-          sleep 5
-          # Test HTTPS from INSIDE the proxy to see if nginx upstream is working
-          ssh root@109.199.106.147 "
-            echo '=== HTTPS inside proxy ===';
-            docker exec domainhunt_proxy wget -qO- -T5 --no-check-certificate https://127.0.0.1/api/health 2>/dev/null && echo '' || echo 'WGET_HTTPS_FAILED';
-            echo '=== proxy nginx error log (last 5) ===';
-            docker exec domainhunt_proxy cat /var/log/nginx/error.log 2>/dev/null | tail -5 || echo 'no error log';
-            echo '=== proxy nginx access log (last 3) ===';
-            docker exec domainhunt_proxy cat /var/log/nginx/access.log 2>/dev/null | tail -3 || echo 'no access log';
-          "
-          curl -sf https://app.digitalfinds.net/api/health && echo 'Public URL OK' || echo 'WARN: public URL still 502 after nginx fix'
+          sleep 8
+          curl -sf https://app.digitalfinds.net/api/health && echo 'Public URL OK' || echo 'WARN: public URL still failing'

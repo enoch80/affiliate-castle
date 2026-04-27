@@ -61,13 +61,13 @@ jobs:
       - name: Fix nginx SSL for app.digitalfinds.net
         run: |
           ssh root@109.199.106.147 "
-            # 1. Ensure affiliate-castle network is attached so container DNS works in proxy
+            # 1. Ensure affiliate-castle network is attached so container DNS resolves in proxy
             docker network connect affiliate-castle_default domainhunt_proxy 2>/dev/null || true
-            # 2. Patch host.docker.internal (Mac/Win only) → container name (Linux Docker DNS)
+            # 2. Patch host.docker.internal (Mac/Win-only) → affiliate-castle-app-1 (Linux Docker DNS)
             sed -i 's|proxy_pass http://host.docker.internal:3200;|proxy_pass http://affiliate-castle-app-1:3200;|g' /opt/domain-hunt-release/nginx.conf
-            # 3. Restart proxy so nginx re-resolves upstream DNS with new container IP
+            # 3. Restart proxy so nginx re-resolves the upstream with the freshly recreated container IP
             docker restart domainhunt_proxy
             echo 'Proxy restarted OK'
           "
           sleep 8
-          curl -sf https://app.digitalfinds.net/api/health && echo 'Public URL OK' || echo 'WARN: public URL still failing'
+          curl -sf https://app.digitalfinds.net/api/health && echo 'PUBLIC URL OK' || (echo 'STILL FAILING'; exit 1)

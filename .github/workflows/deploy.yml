@@ -70,15 +70,15 @@ jobs:
             nginx -t 2>&1 && (pkill -HUP nginx || service nginx reload 2>/dev/null || systemctl restart nginx 2>/dev/null) && echo 'Nginx config applied and reloaded' || (nginx -t 2>&1; echo 'nginx -t FAILED — check config above')
           "
           sleep 5
-          # Diagnose: sites-enabled + nginx SSL blocks + HTTPS test from server
+          # Diagnose: sites-enabled + HTTPS test from server + error log
           ssh root@109.199.106.147 "
             echo '=== sites-enabled ===';
             ls -la /etc/nginx/sites-enabled/;
-            echo '=== affiliate-castle.conf head ===';
-            head -30 /etc/nginx/sites-available/affiliate-castle.conf;
-            echo '=== nginx 443 server blocks ===';
-            nginx -T 2>/dev/null | grep -E '^[[:space:]]*(server_name|listen|proxy_pass|ssl_cert)' | grep -B2 -A2 '443' | head -40;
             echo '=== HTTPS local test ===';
             curl -ks --resolve app.digitalfinds.net:443:127.0.0.1 https://app.digitalfinds.net/api/health -o /dev/null -w 'HTTPS_LOCAL_CODE=%{http_code}' && echo '' || echo 'HTTPS_LOCAL_FAILED';
+            echo '=== nginx error log (last 10) ===';
+            tail -10 /var/log/nginx/error.log 2>/dev/null || echo 'no error log';
+            echo '=== port 3200 check ===';
+            curl -sf http://127.0.0.1:3200/api/health -o /dev/null -w '3200_CODE=%{http_code}' && echo '' || echo 'PORT_3200_FAILED';
           "
           curl -sf https://app.digitalfinds.net/api/health && echo 'Public URL OK' || echo 'WARN: public URL still 502 after nginx fix'

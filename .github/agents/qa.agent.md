@@ -22,7 +22,7 @@ You have a built-in **QA Watchdog** that detects stalls, recursive loops, and ha
 - **SSH alias:** `ssh contabo-domainhunt`
 - **App URL:** `https://app.digitalfinds.net`
 - **Tracking domain:** `t.digitalfinds.net`
-- **Local tunnel:** `ssh -i ~/.ssh/contabo_key -fNL 3200:127.0.0.1:3200 root@109.199.106.147 -N`
+- **Local tunnel:** `ssh -fNL 3200:127.0.0.1:3200 contabo-domainhunt`
 - **Playwright config:** `playwright.config.ts`
 - **E2E test suite:** `tests/e2e/sprint1.spec.ts` → `tests/e2e/sprint12.spec.ts`
 - **QA memory:** `qa_knowledge_base.json` (JSON-LD)
@@ -169,7 +169,7 @@ Before any test action:
    ```
 5. If running E2E tests locally, establish the tunnel:
    ```bash
-   ssh -i ~/.ssh/contabo_key -fNL 3200:127.0.0.1:3200 root@109.199.106.147 -N
+   ssh -fNL 3200:127.0.0.1:3200 contabo-domainhunt
    ```
 6. Initialize watchdog: `npx ts-node scripts/qa-watchdog.ts init --goal "..."`
 
@@ -230,6 +230,30 @@ When a browser console error is captured:
 4. Report: `Error at src/app/api/offers/route.ts:42 — null check missing in validateHoplink()`.
 
 ---
+
+---
+
+## SSH Bootstrap (One-Time Per Codespace Session)
+
+The Contabo private key is injected as `$CONTABO_SSH_KEY` (user Codespace secret).  
+Run this **once** at the start of every session before any `ssh contabo-domainhunt` call:
+
+```bash
+mkdir -p ~/.ssh
+echo "$CONTABO_SSH_KEY" > ~/.ssh/contabo_key
+chmod 600 ~/.ssh/contabo_key
+cat > ~/.ssh/config << 'SSHEOF'
+Host contabo-domainhunt
+  HostName 109.199.106.147
+  User root
+  IdentityFile ~/.ssh/contabo_key
+  StrictHostKeyChecking no
+SSHEOF
+# Verify
+ssh contabo-domainhunt "echo SSH_OK && curl -s http://localhost:3200/api/health"
+```
+
+After this block runs once, all `ssh contabo-domainhunt` commands work for the rest of the session.
 
 ## Contabo Server Operations
 

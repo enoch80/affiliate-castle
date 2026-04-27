@@ -17,8 +17,8 @@ export default async function CampaignsPage() {
   })
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className="p-4 sm:p-8">
+      <div className="flex items-center justify-between mb-6 sm:mb-8 gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white">Campaigns</h1>
           <p className="text-slate-400 mt-1">All active and completed affiliate campaigns</p>
@@ -51,21 +51,27 @@ export default async function CampaignsPage() {
               <Link
                 key={c.id}
                 href={`/dashboard/campaigns/${c.id}`}
-                className="flex items-center justify-between bg-slate-800 border border-slate-700 rounded-xl px-6 py-4 hover:border-orange-500 transition-colors"
+                className="flex items-start sm:items-center justify-between bg-slate-800 border border-slate-700 rounded-xl px-4 sm:px-6 py-3 sm:py-4 hover:border-orange-500 transition-colors gap-3"
               >
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-white truncate">{c.name}</div>
                   <div className="text-xs text-slate-400 mt-0.5 truncate">{c.offer?.hoplink}</div>
+                  {/* Mobile: status badge inline with name */}
+                  <div className="mt-1 sm:hidden">
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${badge.color}`}>
+                      {badge.label}
+                    </span>
+                  </div>
                 </div>
-                <div className="ml-4 flex items-center gap-4">
-                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${badge.color}`}>
+                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-4 shrink-0">
+                  <span className={`hidden sm:inline text-xs font-medium px-2.5 py-1 rounded-full ${badge.color}`}>
                     {badge.label}
                   </span>
                   <div className="text-right text-sm">
                     <div className="text-white font-bold">${c.totalRevenue.toFixed(2)}</div>
-                    <div className="text-slate-400">{c.totalConversions} conv.</div>
+                    <div className="text-slate-400 text-xs">{c.totalConversions} conv.</div>
                   </div>
-                  <span className="text-slate-500 text-xs">{new Date(c.createdAt).toLocaleDateString()}</span>
+                  <span className="hidden sm:inline text-slate-500 text-xs">{new Date(c.createdAt).toLocaleDateString()}</span>
                 </div>
               </Link>
             )

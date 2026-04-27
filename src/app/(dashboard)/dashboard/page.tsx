@@ -36,21 +36,21 @@ export default function LaunchPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6">
+    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 py-8">
       <div className="w-full max-w-2xl">
         {/* Hero */}
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-extrabold text-white tracking-tight mb-4">
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight mb-4">
             Paste. Launch. Done.
           </h1>
-          <p className="text-slate-400 text-lg">
+          <p className="text-slate-400 text-base sm:text-lg">
             Paste your affiliate hoplink and the engine does everything — research,
             content, bridge page, publishing, email drip, Telegram, tracking.
           </p>
         </div>
 
         {/* Launch form */}
-        <form onSubmit={handleLaunch} className="bg-slate-800 border border-slate-700 rounded-2xl p-8 shadow-2xl">
+        <form onSubmit={handleLaunch} className="bg-slate-800 border border-slate-700 rounded-2xl p-5 sm:p-8 shadow-2xl">
           <label className="block text-sm font-semibold text-slate-300 mb-2">
             Affiliate Hoplink
           </label>
@@ -87,7 +87,7 @@ export default function LaunchPage() {
         </form>
 
         {/* What happens next */}
-        <div className="mt-10 grid grid-cols-2 gap-4 text-center text-sm text-slate-500">
+        <div className="mt-8 sm:mt-10 grid grid-cols-2 gap-3 sm:gap-4 text-center text-sm text-slate-500">
           {[
             ['🔍', 'Market & SERP research'],
             ['✍️', '12 AI-humanized content pieces'],

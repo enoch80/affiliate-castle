@@ -85,7 +85,7 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="p-8">
+      <div className="p-4 sm:p-8">
         <h1 className="text-2xl font-bold text-white mb-6">Analytics</h1>
         <div className="text-slate-400 animate-pulse">Loading metrics…</div>
       </div>
@@ -94,7 +94,7 @@ export default function AnalyticsPage() {
 
   if (error) {
     return (
-      <div className="p-8">
+      <div className="p-4 sm:p-8">
         <h1 className="text-2xl font-bold text-white mb-4">Analytics</h1>
         <div className="bg-red-900/30 border border-red-700 text-red-300 px-4 py-3 rounded-lg">{error}</div>
       </div>
@@ -106,7 +106,7 @@ export default function AnalyticsPage() {
   const chartData = data.series.map((s) => ({ ...s, date: fmtDate(s.date) }))
 
   return (
-    <div className="p-8 max-w-5xl">
+    <div className="p-4 sm:p-8 max-w-5xl">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-white">Analytics</h1>
         <p className="text-slate-400 mt-1 text-sm">All campaigns · last 30 days</p>

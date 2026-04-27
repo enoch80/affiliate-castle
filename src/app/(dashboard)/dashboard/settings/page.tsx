@@ -469,7 +469,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="p-8 max-w-3xl">
+    <div className="p-4 sm:p-8 max-w-3xl">
       <h1 className="text-2xl font-bold text-white mb-1">Platform Connections</h1>
       <p className="text-slate-400 mb-6 text-sm">
         Connect publishing platforms. Credentials are verified live then stored AES-256-GCM

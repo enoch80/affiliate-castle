@@ -116,7 +116,7 @@ export default async function CampaignDetailPage({ params }: { params: { id: str
   const pipelineIndex = getPipelineIndex(campaign.status)
 
   return (
-    <div className="p-8 max-w-5xl">
+    <div className="p-4 sm:p-8 max-w-5xl">
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
@@ -134,7 +134,8 @@ export default async function CampaignDetailPage({ params }: { params: { id: str
       {/* Pipeline Progress Bar */}
       <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 mb-6">
         <div className="text-sm font-semibold text-slate-300 mb-4">Pipeline Progress</div>
-        <div className="flex items-center gap-0">
+        <div className="overflow-x-auto">
+        <div className="flex items-center gap-0 min-w-[480px]">
           {PIPELINE_STEPS.map((step, idx) => {
             const done = idx < pipelineIndex
             const active = idx === pipelineIndex
@@ -160,10 +161,11 @@ export default async function CampaignDetailPage({ params }: { params: { id: str
             )
           })}
         </div>
+        </div>
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         {stats.map(s => (
           <div key={s.label} className="bg-slate-800 border border-slate-700 rounded-xl p-4">
             <div className="text-xs text-slate-400 mb-1">{s.label}</div>
@@ -246,7 +248,7 @@ export default async function CampaignDetailPage({ params }: { params: { id: str
             <span className="text-xs bg-indigo-900 text-indigo-300 px-2 py-1 rounded-full font-medium">Sprint 3</span>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 mb-6 text-sm">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6 text-sm">
             <div className="bg-slate-900 rounded-lg p-3">
               <div className="text-slate-400 text-xs mb-1">Primary Keyword</div>
               <div className="text-indigo-300 font-semibold">{brief.primaryKeyword as string}</div>

@@ -70,14 +70,18 @@ jobs:
             nginx -t 2>&1 && (pkill -HUP nginx || service nginx reload 2>/dev/null || systemctl restart nginx 2>/dev/null) && echo 'Nginx config applied and reloaded' || (nginx -t 2>&1; echo 'nginx -t FAILED — check config above')
           "
           sleep 5
-          # Diagnose: sites-enabled + HTTPS test from server + error log
+          # Diagnose: who listens on 443, nginx logs, port 3200 check
           ssh root@109.199.106.147 "
-            echo '=== sites-enabled ===';
-            ls -la /etc/nginx/sites-enabled/;
+            echo '=== process on port 443 ===';
+            ss -tlnp | grep ':443' || echo 'nothing on 443';
+            echo '=== nginx access log (last 5) ===';
+            tail -5 /var/log/nginx/access.log 2>/dev/null || echo 'no access log';
+            echo '=== nginx error log (last 5) ===';
+            tail -5 /var/log/nginx/error.log 2>/dev/null || echo 'no error log';
             echo '=== HTTPS local test ===';
             curl -ks --resolve app.digitalfinds.net:443:127.0.0.1 https://app.digitalfinds.net/api/health -o /dev/null -w 'HTTPS_LOCAL_CODE=%{http_code}' && echo '' || echo 'HTTPS_LOCAL_FAILED';
-            echo '=== nginx error log (last 10) ===';
-            tail -10 /var/log/nginx/error.log 2>/dev/null || echo 'no error log';
+            echo '=== nginx error log after test ===';
+            tail -5 /var/log/nginx/error.log 2>/dev/null | grep -v '^$' || echo 'empty';
             echo '=== port 3200 check ===';
             curl -sf http://127.0.0.1:3200/api/health -o /dev/null -w '3200_CODE=%{http_code}' && echo '' || echo 'PORT_3200_FAILED';
           "

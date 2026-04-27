@@ -60,26 +60,47 @@ jobs:
 
       - name: Fix nginx SSL for app.digitalfinds.net
         run: |
-          # SCP the committed nginx config to the server (avoids YAML/heredoc issues)
-          scp nginx/sites/app.conf root@109.199.106.147:/etc/nginx/sites-available/affiliate-castle.conf
-          # Enable site (idempotent symlink) and capture any nginx -t errors
+          # Write nginx vhost config for affiliate-castle (no variable interpolation with single-quoted heredoc)
+          cat > /tmp/affiliate-castle-proxy.conf << 'NGINXEOF'
+server {
+  listen 80;
+  server_name app.digitalfinds.net;
+  return 301 https://$host$request_uri;
+}
+server {
+  listen 443 ssl;
+  server_name app.digitalfinds.net;
+  ssl_certificate /etc/letsencrypt/live/app.digitalfinds.net/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/app.digitalfinds.net/privkey.pem;
+  add_header Strict-Transport-Security "max-age=63072000" always;
+  location /public/img/ {
+    alias /opt/affiliate-castle/public/img/;
+  }
+  location / {
+    proxy_pass http://affiliate-castle-app-1:3200;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_read_timeout 60s;
+    proxy_connect_timeout 10s;
+  }
+}
+NGINXEOF
+          # SCP the vhost config to the server
+          scp /tmp/affiliate-castle-proxy.conf root@109.199.106.147:/tmp/affiliate-castle-proxy.conf
+          # Inject vhost into domainhunt_proxy container and reload
           ssh root@109.199.106.147 "
-            # Clean up any leftover conf.d override from previous deploy attempts
-            rm -f /etc/nginx/conf.d/91-affiliate-castle-ssl.conf
-            ln -sf /etc/nginx/sites-available/affiliate-castle.conf /etc/nginx/sites-enabled/affiliate-castle.conf
-            nginx -t 2>&1 && (pkill -HUP nginx || service nginx reload 2>/dev/null || systemctl restart nginx 2>/dev/null) && echo 'Nginx config applied and reloaded' || (nginx -t 2>&1; echo 'nginx -t FAILED — check config above')
+            # Connect affiliate-castle_default network to proxy so it can reach app by container name
+            docker network connect affiliate-castle_default domainhunt_proxy 2>/dev/null && echo 'Network connected' || echo 'Network already connected or failed'
+            # Ensure conf.d/*.conf is included in nginx.conf
+            grep -q 'conf.d/\*' /opt/domain-hunt-release/nginx.conf || sed -i 's|include[[:space:]]\+.*mime.types.*|&\n    include /etc/nginx/conf.d/*.conf;|' /opt/domain-hunt-release/nginx.conf
+            # Copy vhost config into the proxy container
+            docker cp /tmp/affiliate-castle-proxy.conf domainhunt_proxy:/etc/nginx/conf.d/affiliate-castle.conf
+            # Test and reload nginx inside proxy container
+            docker exec domainhunt_proxy nginx -t 2>&1 && docker exec domainhunt_proxy nginx -s reload && echo 'Proxy nginx reloaded OK' || (docker exec domainhunt_proxy nginx -t 2>&1; echo 'Proxy nginx FAILED')
           "
           sleep 5
-          # Inspect domainhunt_proxy and add app.digitalfinds.net vhost
-          ssh root@109.199.106.147 "
-            echo '=== domainhunt_proxy mounts ===';
-            docker inspect domainhunt_proxy --format '{{json .Mounts}}' | python3 -c 'import sys,json; [print(m[\"Source\"],\"->\",m[\"Destination\"]) for m in json.load(sys.stdin)]' 2>/dev/null || echo 'inspect failed';
-            echo '=== certs accessible in proxy ===';
-            docker exec domainhunt_proxy ls /etc/letsencrypt/live/ 2>/dev/null || echo 'no letsencrypt in proxy';
-            echo '=== nginx conf.d in proxy ===';
-            docker exec domainhunt_proxy ls /etc/nginx/conf.d/ 2>/dev/null || echo 'no conf.d';
-            echo '=== nginx.conf includes ===';
-            docker exec domainhunt_proxy cat /etc/nginx/nginx.conf 2>/dev/null | grep include || echo 'no includes';
-          "
-          curl -sf https://app.digitalfinds.net/api/health && echo 'Public URL OK' || echo 'WARN: public URL still 502 after nginx fix'
           curl -sf https://app.digitalfinds.net/api/health && echo 'Public URL OK' || echo 'WARN: public URL still 502 after nginx fix'

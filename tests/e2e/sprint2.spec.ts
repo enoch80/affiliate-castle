@@ -52,7 +52,7 @@ test.describe('Affiliate Castle Sprint 2', () => {
     // Verify launch UI
     await expect(page.locator('input[type="url"]')).toBeVisible()
     await expect(page.locator('button', { hasText: /launch campaign/i })).toBeVisible()
-    await expect(page.locator('text=Affiliate Castle')).toBeVisible()
+    await expect(page.locator('text=Affiliate Castle').first()).toBeVisible()
   })
 
   test('paste hoplink and submit creates a campaign', async ({ page }) => {

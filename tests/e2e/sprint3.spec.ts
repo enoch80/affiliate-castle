@@ -49,7 +49,7 @@ test.describe('Affiliate Castle Sprint 3', () => {
     await login(page)
     await page.goto(`${BASE_URL}/dashboard`)
     // The launch area should be visible
-    await expect(page.locator('text=Affiliate Castle')).toBeVisible({ timeout: 10000 })
+    await expect(page.locator('text=Affiliate Castle').first()).toBeVisible({ timeout: 10000 })
   })
 
   test('paste hoplink and submit creates a campaign', async ({ page }) => {

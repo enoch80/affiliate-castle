@@ -259,3 +259,39 @@ function truncate(str: string, max: number): string {
 function capitalize(str: string): string {
   return str.replace(/\b\w/g, (c) => c.toUpperCase())
 }
+
+// ---------------------------------------------------------------------------
+// §12.2 — Dynamic competitor word count (async, for pipeline use)
+// ---------------------------------------------------------------------------
+
+async function fetchWithTimeout(url: string, ms: number): Promise<string> {
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), ms)
+  try {
+    const res = await fetch(url, { signal: ctrl.signal })
+    return await res.text()
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+/**
+ * Fetch up to 5 SERP competitor pages, strip HTML, count their words, and
+ * return the median + 200 (floor 1,500).  Falls back to 1,850 on any error.
+ */
+export async function getCompetitorWordCount(serpUrls: string[]): Promise<number> {
+  const counts: number[] = []
+  for (const url of serpUrls.slice(0, 5)) {
+    try {
+      const html = await fetchWithTimeout(url, 6000)
+      const text = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ')
+      counts.push(text.trim().split(' ').length)
+    } catch {
+      // skip unreachable URLs
+    }
+  }
+  if (counts.length === 0) return 1850
+  const sorted = counts.sort((a, b) => a - b)
+  const median = sorted[Math.floor(sorted.length / 2)]
+  return Math.max(median + 200, 1500)
+}

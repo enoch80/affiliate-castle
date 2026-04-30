@@ -99,6 +99,8 @@ model ContentPiece {
   status          String    @default("generating")
   platformPublishId String?
   platformPublishUrl String?
+  seoScore        Float?
+  seoIssues       String?
   createdAt       DateTime  @default(now())
 }
 

@@ -10,6 +10,11 @@
  *
  * Credentials are read from the PlatformAccount table (AES-256 encrypted).
  * All steps are non-fatal — errors per platform are recorded in PublishJob.
+ *
+ * Sprint C additions:
+ *   - SEO gate (score ≥ 70) before publishing — autoFix attempted once on failure
+ *   - JSON-LD Article schema injected into HTML content pieces
+ *   - Internal + external links injected into article HTML
  */
 import { prisma } from '@/lib/prisma'
 import { decryptCredential } from '@/lib/credentials'
@@ -21,6 +26,10 @@ import { publishToMedium } from './medium'
 import { pingIndexNow } from './indexnow'
 import { updateSitemap } from './sitemap'
 import { generateCoverImage } from './image-generator'
+import { scoreContent, autoFixSEO, SEO_GATE_SCORE } from '@/lib/seo-scorer'
+import { buildArticleSchema, wrapSchemaTag } from '@/lib/schema-generator'
+import { injectInternalLinks } from '@/lib/internal-linker'
+import { injectExternalLinks } from '@/lib/external-linker'
 
 const DELAY_MS = 3 * 60 * 1000 // 3 minutes between platforms (bot detection avoidance)
 
@@ -295,6 +304,112 @@ async function runTumblr(input: PublishInput): Promise<PublishPlatformResult> {
 }
 
 // ---------------------------------------------------------------------------
+// Sprint C — SEO gate + schema injection + link injection
+// ---------------------------------------------------------------------------
+
+interface SEOGateResult {
+  passed: boolean
+  score: number
+  issues: string[]
+  /** HTML with schema + links injected (only when passed) */
+  enhancedHtml: string | null
+}
+
+async function runSEOGateAndEnrich(
+  html: string,
+  input: PublishInput,
+  briefData?: Record<string, unknown>,
+): Promise<SEOGateResult> {
+  const keyword = input.primaryKeyword
+  const targetWordCount =
+    (briefData?.targetWordCount as number | undefined) ?? 1850
+  const mandatoryEntities =
+    (briefData?.mandatoryEntities as string[] | undefined) ?? []
+  const lsiTerms =
+    (briefData?.lsiTerms as string[] | undefined) ?? []
+
+  // Score
+  let result = scoreContent(html, { keyword, targetWordCount, mandatoryEntities, lsiTerms })
+
+  let workingHtml = html
+
+  // One autoFix attempt on failure
+  if (result.score < SEO_GATE_SCORE) {
+    workingHtml = autoFixSEO(html, result, {
+      html,
+      keyword,
+      targetWordCount,
+      mandatoryEntities,
+      lsiTerms,
+    })
+    result = scoreContent(workingHtml, { keyword, targetWordCount, mandatoryEntities, lsiTerms })
+    console.log(`[publisher] SEO score after autoFix: ${result.score}`)
+  }
+
+  if (result.score < SEO_GATE_SCORE) {
+    console.warn(`[publisher] SEO gate FAILED (score=${result.score}) — skipping article platforms`)
+    return { passed: false, score: result.score, issues: result.issues, enhancedHtml: null }
+  }
+
+  // Inject external links (pure)
+  let enrichedHtml = injectExternalLinks(workingHtml, input.niche)
+
+  // Inject internal links (async DB lookup)
+  try {
+    enrichedHtml = await injectInternalLinks(enrichedHtml, input.campaignId)
+  } catch (err) {
+    console.warn('[publisher] Internal linker failed:', err)
+  }
+
+  // Build and inject Article JSON-LD schema
+  const siteUrl = process.env.APP_BASE_URL ?? 'https://app.digitalfinds.net'
+  const articleSchema = buildArticleSchema({
+    title: (briefData?.proposedTitle as string | undefined) ?? input.primaryKeyword,
+    url: input.bridgePageUrl,
+    datePublished: new Date().toISOString(),
+    description: (briefData?.proposedMetaDescription as string | undefined) ??
+      input.primaryKeyword,
+    authorName: process.env.SITE_AUTHOR ?? 'The Team',
+    publisherName: process.env.APP_DOMAIN ?? 'AffiliateCastle',
+    publisherLogoUrl: `${siteUrl}/img/logo.png`,
+  })
+  const schemaTag = wrapSchemaTag(articleSchema)
+
+  if (enrichedHtml.includes('</head>')) {
+    enrichedHtml = enrichedHtml.replace('</head>', `${schemaTag}\n</head>`)
+  } else {
+    enrichedHtml = schemaTag + '\n' + enrichedHtml
+  }
+
+  return { passed: true, score: result.score, issues: result.issues, enhancedHtml: enrichedHtml }
+}
+
+async function saveSeoScore(
+  campaignId: string,
+  contentType: string,
+  score: number,
+  issues: string[],
+): Promise<void> {
+  try {
+    const piece = await prisma.contentPiece.findFirst({
+      where: { campaignId, type: contentType },
+      select: { id: true },
+      orderBy: { createdAt: 'desc' },
+    })
+    if (piece) {
+      await prisma.contentPiece.update({
+        where: { id: piece.id },
+        data: {
+          seoScore: score,
+          seoIssues: issues.slice(0, 10).join(' | '),
+          status: score >= SEO_GATE_SCORE ? 'ready' : 'needs_revision',
+        },
+      })
+    }
+  } catch { /* non-fatal */ }
+}
+
+// ---------------------------------------------------------------------------
 // Main orchestrator
 // ---------------------------------------------------------------------------
 
@@ -306,8 +421,45 @@ export async function publishCampaign(
 
   console.log(`[publisher] Starting publish for campaign ${input.campaignId}`)
 
+  // ── Sprint C: load content brief for SEO context ─────────────────────────
+  let briefData: Record<string, unknown> | undefined
+  try {
+    const briefPiece = await prisma.contentPiece.findFirst({
+      where: { campaignId: input.campaignId, type: 'content_brief' },
+      select: { serpBriefJson: true },
+      orderBy: { createdAt: 'desc' },
+    })
+    if (briefPiece?.serpBriefJson) {
+      const raw = briefPiece.serpBriefJson as Record<string, unknown>
+      briefData = (raw.contentBrief as Record<string, unknown> | undefined) ?? raw
+    }
+  } catch { /* non-fatal */ }
+
+  // ── Sprint C: SEO gate on main article HTML ───────────────────────────────
+  let seoGateResult: SEOGateResult | undefined
+  const articlePiece = await getContentPiece(input.campaignId, 'article_blogger') ??
+    await getContentPiece(input.campaignId, 'article_devto')
+
+  if (articlePiece?.contentHtml || articlePiece?.contentText) {
+    const htmlToScore = articlePiece.contentHtml ??
+      `<p>${(articlePiece.contentText ?? '').replace(/\n\n/g, '</p><p>')}</p>`
+    seoGateResult = await runSEOGateAndEnrich(htmlToScore, input, briefData)
+    await saveSeoScore(
+      input.campaignId,
+      'article_blogger',
+      seoGateResult.score,
+      seoGateResult.issues,
+    )
+    console.log(`[publisher] SEO score: ${seoGateResult.score} — ${seoGateResult.passed ? 'PASS' : 'FAIL'}`)
+  }
+
+  // If SEO gate failed, skip article platforms but continue with non-article ones
+  const articlePlatformsEnabled = !seoGateResult || seoGateResult.passed
+
   // Platform 1: dev.to (immediate)
-  const devtoResult = await runDevto(input)
+  const devtoResult = articlePlatformsEnabled
+    ? await runDevto(input)
+    : { platform: 'devto', success: false, error: `SEO gate failed (score=${seoGateResult?.score})` }
   results.push(devtoResult)
   if (devtoResult.url) publishedUrls.push(devtoResult.url)
   console.log(`[publisher] devto: ${devtoResult.success ? devtoResult.url : devtoResult.error}`)
@@ -316,7 +468,9 @@ export async function publishCampaign(
   await sleep(DELAY_MS)
 
   // Platform 2: Hashnode
-  const hashnodeResult = await runHashnode(input)
+  const hashnodeResult = articlePlatformsEnabled
+    ? await runHashnode(input)
+    : { platform: 'hashnode', success: false, error: `SEO gate failed (score=${seoGateResult?.score})` }
   results.push(hashnodeResult)
   if (hashnodeResult.url) publishedUrls.push(hashnodeResult.url)
   console.log(`[publisher] hashnode: ${hashnodeResult.success ? hashnodeResult.url : hashnodeResult.error}`)
@@ -324,7 +478,9 @@ export async function publishCampaign(
   await sleep(DELAY_MS)
 
   // Platform 3: Blogger
-  const bloggerResult = await runBlogger(input)
+  const bloggerResult = articlePlatformsEnabled
+    ? await runBlogger(input)
+    : { platform: 'blogger', success: false, error: `SEO gate failed (score=${seoGateResult?.score})` }
   results.push(bloggerResult)
   if (bloggerResult.url) publishedUrls.push(bloggerResult.url)
   console.log(`[publisher] blogger: ${bloggerResult.success ? bloggerResult.url : bloggerResult.error}`)
@@ -332,7 +488,9 @@ export async function publishCampaign(
   await sleep(DELAY_MS)
 
   // Platform 4: Tumblr
-  const tumblrResult = await runTumblr(input)
+  const tumblrResult = articlePlatformsEnabled
+    ? await runTumblr(input)
+    : { platform: 'tumblr', success: false, error: `SEO gate failed (score=${seoGateResult?.score})` }
   results.push(tumblrResult)
   if (tumblrResult.url) publishedUrls.push(tumblrResult.url)
   console.log(`[publisher] tumblr: ${tumblrResult.success ? tumblrResult.url : tumblrResult.error}`)
@@ -340,7 +498,9 @@ export async function publishCampaign(
   await sleep(DELAY_MS)
 
   // Platform 5: Medium
-  const mediumResult = await runMedium(input)
+  const mediumResult = articlePlatformsEnabled
+    ? await runMedium(input)
+    : { platform: 'medium', success: false, error: `SEO gate failed (score=${seoGateResult?.score})` }
   results.push(mediumResult)
   if (mediumResult.url) publishedUrls.push(mediumResult.url)
   console.log(`[publisher] medium: ${mediumResult.success ? mediumResult.url : mediumResult.error}`)

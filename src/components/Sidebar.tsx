@@ -10,6 +10,7 @@ const nav = [
   { href: '/dashboard', label: 'Launch', icon: '🚀' },
   { href: '/dashboard/campaigns', label: 'Campaigns', icon: '📋' },
   { href: '/dashboard/analytics', label: 'Analytics', icon: '📊' },
+  { href: '/dashboard/channels', label: 'Channels', icon: '📢' },
   { href: '/dashboard/settings', label: 'Settings', icon: '⚙️' },
 ]
 

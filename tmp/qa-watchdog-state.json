@@ -1,0 +1,23 @@
+{
+  "sessionId": "b7b4bf27-83c8-418d-a677-57325ec0e668",
+  "goal": "Build and deploy full-stack TedWoodworking campaign preview — all 12 content types",
+  "phase": "DONE",
+  "passed": 1,
+  "failed": 0,
+  "testResults": [
+    {
+      "name": "preview page deployed at https://app.digitalfinds.net/preview/campaign-preview.html",
+      "status": "pass",
+      "timestamp": "2026-04-29T02:30:30.276Z"
+    }
+  ],
+  "failedSourceFiles": [],
+  "researchFindings": [],
+  "lastActionTimestamp": "2026-04-29T02:30:38.302Z",
+  "consecutiveIdleCycles": 0,
+  "isHardWall": false,
+  "wallReason": null,
+  "auditEntries": [],
+  "createdAt": "2026-04-28T19:02:31.558Z",
+  "updatedAt": "2026-04-29T02:30:38.303Z"
+}

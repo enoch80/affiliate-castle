@@ -230,7 +230,8 @@ async function runBlogger(input: PublishInput): Promise<PublishPlatformResult> {
 
 async function runMedium(input: PublishInput): Promise<PublishPlatformResult> {
   const creds = await getPlatformAccount('medium')
-  if (!creds?.integration_token) {
+  const cookieSession = creds?.cookie_auth ?? creds?.cookie_session
+  if (!creds?.integration_token && !cookieSession) {
     return { platform: 'medium', success: false, error: 'No medium account configured' }
   }
 
@@ -242,7 +243,8 @@ async function runMedium(input: PublishInput): Promise<PublishPlatformResult> {
   try {
     const contentHtml = piece.contentHtml ?? (piece.contentText ? `<p>${piece.contentText.replace(/\n\n/g, '</p><p>')}</p>` : '<p></p>')
     const result = await publishToMedium({
-      integrationToken: creds.integration_token,
+      integrationToken: creds?.integration_token,
+      cookieSession,
       title: `${input.primaryKeyword} — Complete Guide`,
       contentHtml,
       tags: extractKeywords(input.niche, input.primaryKeyword),

@@ -25,6 +25,7 @@ import { extractOfferDetails, CANONICAL_NICHES, type CanonicalNiche } from '../l
 import { scrapeSerpTop10 } from '../lib/serp-scraper'
 import { analyzeSemanticGap } from '../lib/semantic-gap'
 import { generateContentBrief } from '../lib/content-brief'
+import { expandKeywords, scoreKeywordsByKgr, pickBestKeyword } from '../lib/kgr'
 import { generateAllContent } from '../lib/content-generator'
 import { humanize } from '../lib/humanizer'
 import { scoreContent } from '../lib/ai-detector'
@@ -108,10 +109,25 @@ async function processOfferJob(job: Job<OfferPipelineJobData>) {
   }
 
   // Step 3b: Niche normalization — map LLM output to canonical niche set
-  const rawNiche = (extraction.niche || '').toLowerCase().replace(/[^a-z_]/g, '_')
-  extraction.niche = (CANONICAL_NICHES as readonly string[]).includes(rawNiche)
-    ? (rawNiche as CanonicalNiche)
-    : 'other'
+  const NICHE_SLUG_MAP: Record<string, string> = {
+    woodworking: 'woodworking', carpentry: 'woodworking',
+    gardening: 'gardening', garden: 'gardening',
+    fishing: 'fishing', angling: 'fishing',
+    quilting: 'quilting', sewing: 'quilting',
+    birding: 'birding', 'bird-watching': 'birding', 'bird_watching': 'birding',
+    genealogy: 'genealogy',
+    'ham-radio': 'ham-radio', 'amateur-radio': 'ham-radio', 'ham_radio': 'ham-radio',
+    'rv-living': 'rv-living', rv: 'rv-living',
+    watercolor: 'watercolor', painting: 'watercolor',
+    canning: 'canning', preserving: 'canning',
+    'model-railroading': 'model-railroading', 'model_railroading': 'model-railroading',
+    health: 'health', wealth: 'wealth', relationships: 'relationships',
+    software: 'software', survival: 'survival',
+  }
+  const rawNiche = (extraction.niche || '').toLowerCase().replace(/[^a-z_-]/g, '-')
+  const canonicalNiche = NICHE_SLUG_MAP[rawNiche] ||
+    ((CANONICAL_NICHES as readonly string[]).includes(rawNiche) ? rawNiche as CanonicalNiche : 'general')
+  extraction.niche = canonicalNiche as CanonicalNiche
 
   // Step 4: Persist Offer + MarketResearch
   await job.updateProgress(80)
@@ -160,16 +176,63 @@ async function processOfferJob(job: Job<OfferPipelineJobData>) {
       status: 'researched',
       angle: extraction.angle,
       name: extraction.productName,
+      nicheSlug: canonicalNiche,
     },
   })
 
   // ─── Sprint 3: SERP scraping + semantic gap + content brief ────────────────
   await job.updateProgress(85)
-  const keyword = extraction.primaryKeyword || extraction.productName || 'affiliate offer'
+  const seedKeyword = extraction.primaryKeyword || extraction.productName || 'affiliate offer'
+
+  // ─── Step 3.5: KGR keyword selection (Bing autocomplete + competition scoring) ───
+  await job.updateProgress(32)
+  let keyword = seedKeyword
+  let kgrResultBest: import('../lib/kgr').KgrResult | null = null
+  let kgrScoredAll: import('../lib/kgr').KgrResult[] = []
+
+  try {
+    console.log(`[offer-pipeline] Step 3.5: expanding keywords for seed "${seedKeyword}"`)
+    const { expanded, searchIntent } = await expandKeywords(seedKeyword, canonicalNiche)
+    console.log(`[offer-pipeline] Step 3.5: expanded to ${expanded.length} candidates`)
+
+    if (expanded.length > 0) {
+      kgrScoredAll = await scoreKeywordsByKgr(expanded, 2, 'authority')
+      kgrResultBest = pickBestKeyword(kgrScoredAll, 'authority')
+      keyword = kgrResultBest.keyword
+
+      // Store search intent on keyword research record
+      await prisma.keywordResearch.update({
+        where: { id: keywordRecord.id },
+        data: {
+          primaryKeyword: keyword,
+          searchIntent,
+          kgrScore: kgrResultBest.kgr,
+          kgrTier: kgrResultBest.tier,
+          allintitleCount: kgrResultBest.allintitleCount,
+          estimatedVolume: kgrResultBest.estimatedVolume,
+          kgrCandidates: kgrScoredAll as unknown as object[],
+        },
+      })
+
+      console.log(
+        `[offer-pipeline] Step 3.5: KGR selected "${keyword}" ` +
+        `(${kgrResultBest.tier}, KGR=${kgrResultBest.kgr.toFixed(2)}, vol≈${kgrResultBest.estimatedVolume}, halo≈${kgrResultBest.estimatedHaloVolume})`,
+      )
+      console.log(
+        '[offer-pipeline] KGR scores: ' +
+        kgrScoredAll.map(r => `${r.keyword} → ${r.kgr.toFixed(2)} (${r.tier})`).join(' | '),
+      )
+    }
+  } catch (err) {
+    console.error('[offer-pipeline] Step 3.5 KGR selection failed (non-fatal, using seed keyword):', err)
+  }
 
   let serpResults: import('../lib/serp-scraper').SerpResult[] = []
+  let serpPageData: import('../lib/serp-scraper').SerpPageData = { paaQuestions: [], relatedSearches: [] }
   try {
-    serpResults = await scrapeSerpTop10(keyword)
+    const scraped = await scrapeSerpTop10(keyword)
+    serpResults = scraped.results
+    serpPageData = scraped.serpPageData
     console.log(`[offer-pipeline] Sprint 3: scraped ${serpResults.length} SERP results`)
   } catch (err) {
     console.error('[offer-pipeline] Sprint 3 SERP scrape failed (non-fatal):', err)
@@ -202,6 +265,8 @@ async function processOfferJob(job: Job<OfferPipelineJobData>) {
       semanticGap: gapAnalysis as unknown as object,
       avgWordCount: gapAnalysis.avgWordCount,
       targetWordCount: gapAnalysis.targetWordCount,
+      paaQuestions: serpPageData.paaQuestions as unknown as object[],
+      relatedSearches: serpPageData.relatedSearches as unknown as object[],
     },
   })
 

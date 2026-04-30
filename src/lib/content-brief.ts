@@ -49,6 +49,18 @@ export interface ContentBrief {
 
   // ─── Competitive context ───────────────────────────────────────────────────
   competitorUrls: string[]
+
+  // ─── Sprint B new fields ───────────────────────────────────────────────────
+  /** kebab-case URL slug derived from primaryKeyword (max 5 words, stop-words removed) */
+  urlSlug: string
+  /** JSON-LD schema type for this content */
+  schemaType: 'Article' | 'HowTo' | 'FAQPage'
+  /** Detected search intent */
+  searchIntent: 'informational' | 'commercial' | 'transactional'
+  /** Estimated reading time in minutes (targetWordCount / 200) */
+  readingTimeMinutes: number
+  /** Pinterest-friendly keyword variants for pin descriptions */
+  pinterestKeywords: string[]
 }
 
 export interface ContentBriefSection {
@@ -157,6 +169,12 @@ export function generateContentBrief(params: {
 
   const ctaSuggestion = `Ready to ${kw}? Get our free guide and learn the fastest path to results →`
 
+  const urlSlug = generateSlug(primaryKeyword || productName)
+  const schemaType = selectSchemaType(primaryKeyword || productName, gap.faqQuestions.length)
+  const searchIntent = detectSearchIntent(primaryKeyword || productName)
+  const readingTimeMinutes = Math.max(1, Math.round((gap.targetWordCount || 1850) / 200))
+  const pinterestKeywords = buildPinterestKeywords(primaryKeyword || productName, secondaryKeywords)
+
   return {
     campaignId,
     generatedAt: new Date().toISOString(),
@@ -179,7 +197,58 @@ export function generateContentBrief(params: {
     ctaSuggestion,
     offerUrl: hoplink,
     competitorUrls: gap.competitorUrls,
+    urlSlug,
+    schemaType,
+    searchIntent,
+    readingTimeMinutes,
+    pinterestKeywords,
   }
+}
+
+const STOP_WORDS = new Set([
+  'a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+  'of', 'with', 'by', 'from', 'is', 'are', 'was', 'were', 'be', 'been',
+])
+
+function generateSlug(keyword: string): string {
+  return keyword
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .split(/\s+/)
+    .filter((w) => !STOP_WORDS.has(w) && w.length > 0)
+    .slice(0, 5)
+    .join('-')
+}
+
+function selectSchemaType(
+  keyword: string,
+  faqCount: number,
+): 'Article' | 'HowTo' | 'FAQPage' {
+  if (/^how to\b/i.test(keyword)) return 'HowTo'
+  if (faqCount >= 4) return 'FAQPage'
+  return 'Article'
+}
+
+function detectSearchIntent(
+  keyword: string,
+): 'informational' | 'commercial' | 'transactional' {
+  const lower = keyword.toLowerCase()
+  if (/\b(buy|price|discount|coupon|deal|order)\b/.test(lower)) return 'transactional'
+  if (/\b(best|top|review|vs|compare|worth it)\b/.test(lower)) return 'commercial'
+  return 'informational'
+}
+
+function buildPinterestKeywords(primary: string, secondary: string[]): string[] {
+  const base = primary.toLowerCase()
+  const variants = [
+    base,
+    `${base} for beginners`,
+    `${base} tips`,
+    `${base} guide`,
+    `learn ${base}`,
+    ...secondary.slice(0, 3).map((s) => s.toLowerCase()),
+  ]
+  return Array.from(new Set(variants)).slice(0, 8)
 }
 
 function truncate(str: string, max: number): string {

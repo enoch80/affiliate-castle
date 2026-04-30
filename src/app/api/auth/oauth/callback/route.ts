@@ -16,11 +16,11 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import crypto from 'crypto'
 import { authOptions } from '@/lib/auth'
 import { getPlatform } from '@/lib/platform-registry'
 import { encryptCredential } from '@/lib/credentials'
 import { prisma } from '@/lib/prisma'
+import { buildOAuth1Header } from '@/lib/oauth1'
 
 const REDIRECT_URI = `${process.env.NEXTAUTH_URL ?? ''}/api/auth/oauth/callback`
 
@@ -120,34 +120,18 @@ async function oauth1Exchange(
 ): Promise<{ oauth_token: string; oauth_token_secret: string } | { error: string }> {
   const consumerKey = process.env.TUMBLR_CONSUMER_KEY ?? ''
   const consumerSecret = process.env.TUMBLR_CONSUMER_SECRET ?? ''
-
-  const nonce = crypto.randomBytes(16).toString('hex')
-  const timestamp = Math.floor(Date.now() / 1000).toString()
   const accessTokenUrl = 'https://www.tumblr.com/oauth/access_token'
 
-  const params: Record<string, string> = {
-    oauth_consumer_key: consumerKey,
-    oauth_nonce: nonce,
-    oauth_signature_method: 'HMAC-SHA1',
-    oauth_timestamp: timestamp,
-    oauth_token: oauthToken,
-    oauth_verifier: oauthVerifier,
-    oauth_version: '1.0',
-  }
-
-  const paramStr = Object.keys(params)
-    .sort()
-    .map((k) => `${encodeURIComponent(k)}=${encodeURIComponent(params[k])}`)
-    .join('&')
-
-  const baseStr = `POST&${encodeURIComponent(accessTokenUrl)}&${encodeURIComponent(paramStr)}`
-  const sigKey = `${encodeURIComponent(consumerSecret)}&${encodeURIComponent(oauthTokenSecret)}`
-  params.oauth_signature = crypto.createHmac('sha1', sigKey).update(baseStr).digest('base64')
-
-  const authHeader = 'OAuth ' + Object.keys(params)
-    .filter((k) => k.startsWith('oauth_'))
-    .map((k) => `${encodeURIComponent(k)}="${encodeURIComponent(params[k])}"`)
-    .join(', ')
+  // RFC 5849 §3.2 — access_token step: token + verifier in protocol fields
+  const authHeader = buildOAuth1Header({
+    method: 'POST',
+    url: accessTokenUrl,
+    consumerKey,
+    consumerSecret,
+    tokenKey: oauthToken,
+    tokenSecret: oauthTokenSecret,
+    extraFields: [['oauth_verifier', oauthVerifier]],
+  })
 
   const res = await fetch(accessTokenUrl, {
     method: 'POST',

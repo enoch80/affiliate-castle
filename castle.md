@@ -31,7 +31,7 @@
 | Backend | Next.js API Routes + Node.js 20 workers |
 | Database | PostgreSQL 16 (Docker) — db `affiliatecastle`, user `affiliate` |
 | Job queue | BullMQ + Redis 7 (Docker) |
-| LLM / AI | Ollama + Llama 3.3 70B (local, port 11434) |
+| LLM / AI | Mistral AI (`mistral-large-latest` / `mistral-small-latest`) via API · Ollama fallback (port 11434) |
 | AI detection | RoBERTa detector (local HuggingFace) |
 | Email engine | Listmonk self-hosted (port 9000) |
 | SMTP | Postfix on same server · domain `digitalfinds.net` |
@@ -94,7 +94,8 @@ affiliate-castle/
 │   └── workflows/deploy.yml      ← CI/CD: push to main → deploy to Contabo
 ├── prisma/schema.prisma          ← Complete database schema
 ├── scripts/
-│   └── api-watchdog.ts           ← 3SR watchdog state machine (added 2026-04-26)
+│   ├── api-watchdog.ts           ← 3SR watchdog state machine (added 2026-04-26)
+│   └── qa-watchdog.ts            ← QA session watchdog (added 2026-04-28)
 ├── src/
 │   ├── app/
 │   │   ├── api/                  ← API routes (see §7)
@@ -176,7 +177,7 @@ ssh contabo-domainhunt "cd /opt/affiliate-castle && docker compose exec -T postg
 |----------|--------|---------|-------|
 | dev.to | ✅ CONNECTED | `dfpubfhpxf9` | API key in DB |
 | tumblr | ✅ CONNECTED | `digitalfinds` | OAuth1 tokens in `.env` |
-| hashnode | ❌ CF BLOCKED | — | Cloudflare managed challenge blocks headless login from datacenter IP. 120s wait never clears. GitHub OAuth fallback broken (PAT ≠ web password). |
+| hashnode | ✅ CONNECTED | — | Direct API token · `publicationId=69eb42c61e45c4e0dac81b37` |
 | medium | 🔄 IN PROGRESS | — | SPA click-nav bypasses CF but correct "Sign in" selector unconfirmed |
 | blogger | ⚠️ PENDING | — | Needs `GOOGLE_PASSWORD` (real password, not PAT) |
 | pinterest | ⚠️ PENDING | — | Needs `PINTEREST_APP_ID`, `PINTEREST_APP_SECRET` |

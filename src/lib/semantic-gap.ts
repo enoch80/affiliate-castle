@@ -11,6 +11,7 @@
  */
 
 import nlp from 'compromise'
+import natural from 'natural'
 import type { SerpResult } from './serp-scraper'
 
 export interface SemanticGapAnalysis {
@@ -69,6 +70,32 @@ function extractEntities(text: string): string[] {
     .filter((e) => e.length > 2 && e.split(' ').length <= 4)
 }
 
+/**
+ * TF-IDF augmentation — extract high-signal terms that appear across many SERP documents.
+ * Uses natural.TfIdf to surface terms that are semantically important across the competition.
+ * Returns up to 20 terms that appear in at least 3 documents.
+ */
+function extractTfIdfTerms(serpResults: SerpResult[]): string[] {
+  if (serpResults.length === 0) return []
+  const tfidf = new natural.TfIdf()
+  for (const r of serpResults) {
+    if (r.bodyText) tfidf.addDocument(r.bodyText.toLowerCase())
+  }
+  const termDocCount = new Map<string, number>()
+  for (let i = 0; i < serpResults.length; i++) {
+    const items = tfidf.listTerms(i).slice(0, 25)
+    for (const item of items) {
+      if (item.term.length < 4 || /^\d+$/.test(item.term)) continue
+      termDocCount.set(item.term, (termDocCount.get(item.term) || 0) + 1)
+    }
+  }
+  return Array.from(termDocCount.entries())
+    .filter(([, count]) => count >= 3)
+    .sort((a, b) => b[1] - a[1])
+    .map(([term]) => term)
+    .slice(0, 20)
+}
+
 /** Run semantic gap analysis across all scraped SERP results */
 export function analyzeSemanticGap(keyword: string, serpResults: SerpResult[]): SemanticGapAnalysis {
   const validResults = serpResults.filter((r) => r.wordCount > 100)
@@ -105,7 +132,7 @@ export function analyzeSemanticGap(keyword: string, serpResults: SerpResult[]): 
     'that the', 'this is', 'there are', 'at the', 'for the',
   ])
 
-  const lsiTerms = [
+  const ngramLsiTerms = [
     ...Array.from(bigramFreq.entries())
       .filter(([term, cnt]) => cnt >= 3 && !stopBigrams.has(term))
       .sort((a, b) => b[1] - a[1])
@@ -117,6 +144,13 @@ export function analyzeSemanticGap(keyword: string, serpResults: SerpResult[]): 
       .map(([term]) => term)
       .slice(0, 10),
   ]
+
+  // TF-IDF augmentation: extract high-signal terms that appear across many documents
+  const tfidfTerms = extractTfIdfTerms(validResults)
+
+  // Merge n-gram terms with TF-IDF terms, deduped
+  const lsiSet = new Set([...ngramLsiTerms, ...tfidfTerms])
+  const lsiTerms = Array.from(lsiSet).slice(0, 25)
 
   // Required headings: H2s that appear (normalized) in 5+ results
   const h2Sets = validResults.map((r) => r.h2.map(normalize))

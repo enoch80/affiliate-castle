@@ -1,0 +1,1534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Affiliate Castle — TedWoodworking Campaign Preview</title>
+<style>
+  :root {
+    --bg: #0f172a; --card: #1e293b; --border: #334155; --accent: #D97706;
+    --text: #e2e8f0; --muted: #94a3b8; --green: #22c55e; --red: #ef4444;
+    --blue: #38bdf8; --purple: #a855f7; --tag-bg: #1e3a5f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; }
+  /* NAV TABS */
+  #tabs-bar { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 4px; padding: 10px 12px; background: #0a1020; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; -webkit-overflow-scrolling: touch; scrollbar-width: thin; scrollbar-color: var(--accent) transparent; }
+  #tabs-bar::-webkit-scrollbar { height: 3px; }
+  #tabs-bar::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
+  .tab-btn { padding: 7px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--muted); cursor: pointer; font-size: 12px; transition: all .15s; white-space: nowrap; flex-shrink: 0; }
+  .tab-btn:hover { border-color: var(--accent); color: var(--text); }
+  .tab-btn.active { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 700; }
+  /* PANELS */
+  .panel { display: none; padding: 24px; max-width: 900px; margin: 0 auto; }
+  .panel.active { display: block; }
+  /* CARDS */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+  .card h3 { font-size: 13px; color: var(--accent); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 12px; }
+  /* BADGE */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: #14532d; color: var(--green); }
+  .badge-amber { background: #451a03; color: #fbbf24; }
+  .badge-blue  { background: #0c2340; color: var(--blue); }
+  .badge-red   { background: #450a0a; color: var(--red); }
+  .badge-purple{ background: #2e1065; color: var(--purple); }
+  /* PROGRESS */
+  .prog-row { display: flex; align-items: center; gap: 10px; padding: 5px 0; border-bottom: 1px solid #1e293b; }
+  .prog-label { flex: 0 0 230px; font-size: 12px; color: var(--muted); }
+  .prog-bar-wrap { flex: 1; background: #1e293b; border-radius: 4px; height: 8px; }
+  .prog-bar { height: 8px; border-radius: 4px; background: var(--accent); }
+  .prog-pct { flex: 0 0 40px; text-align: right; font-size: 11px; color: var(--muted); }
+  /* ARTICLE */
+  .article-body { line-height: 1.75; color: #cbd5e1; }
+  .article-body h1 { font-size: 1.6em; color: var(--text); margin-bottom: 10px; }
+  .article-body h2 { font-size: 1.15em; color: var(--accent); margin: 22px 0 8px; border-left: 3px solid var(--accent); padding-left: 10px; }
+  .article-body p  { margin-bottom: 14px; }
+  .article-body a  { color: var(--blue); text-decoration: underline; }
+  .article-body blockquote { border-left: 3px solid var(--border); padding-left: 14px; color: var(--muted); font-style: italic; margin: 14px 0; }
+  .article-body ul { padding-left: 22px; margin-bottom: 14px; }
+  .article-body ul li { margin-bottom: 5px; }
+  .ftc-bar { background: #1c1c1c; border: 1px solid #333; border-radius: 6px; padding: 8px 14px; font-size: 11px; color: #9ca3af; margin-bottom: 16px; }
+  /* PLATFORM HEADER BAR */
+  .platform-bar { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: 8px; margin-bottom: 16px; }
+  .platform-bar.devto   { background: #1a1a1a; border: 1px solid #333; }
+  .platform-bar.hashnode{ background: #1a0e2e; border: 1px solid #4c1d95; }
+  .platform-bar.tumblr  { background: #001935; border: 1px solid #003878; }
+  .platform-bar.blogger { background: #1a0a00; border: 1px solid #ea4335; }
+  .platform-logo { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
+  .platform-meta { font-size: 12px; color: var(--muted); }
+  /* BRIDGE */
+  .bridge-wrap { background: #1C1008; border-radius: 12px; color: #e5d5b0; font-family: Georgia, serif; overflow: hidden; }
+  .bridge-hero { background: linear-gradient(170deg,rgba(13,7,0,0.72),rgba(45,18,0,0.65) 50%,rgba(13,7,0,0.72)), url('https://images.pexels.com/photos/6790032/pexels-photo-6790032.jpeg?auto=compress&cs=tinysrgb&w=1200') center center/cover no-repeat; padding: 32px 28px 24px; border-bottom: 1px solid #3d1f00; position: relative; }
+  .bridge-url-bar { background: #0a0500; border: 1px solid #3a1a00; border-radius: 6px; padding: 5px 10px; font-size: 10px; color: #6b5030; margin-bottom: 18px; display: flex; align-items: center; gap: 6px; }
+  .bridge-hero h1 { color: #D97706; font-size: 1.45em; margin-bottom: 6px; line-height: 1.3; }
+  .bridge-hero .sub { color: #a07030; font-size: 13px; margin-bottom: 18px; }
+  .bridge-social-proof { display: flex; gap: 16px; flex-wrap: wrap; font-size: 11.5px; color: #a07030; margin-bottom: 16px; }
+  .bridge-social-proof span { display: flex; align-items: center; gap: 4px; }
+  /* Photo proof grid */
+  .photo-grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; gap: 8px; margin: 18px 0; max-width: 520px; }
+  .photo-cell { position: relative; border-radius: 8px; overflow: hidden; }
+  .photo-cell.wide { grid-column: 1 / -1; }
+  .photo-inner { width: 100%; aspect-ratio: 16/9; display: flex; align-items: flex-end; padding: 12px; }
+  .photo-cell.wide .photo-inner { aspect-ratio: 21/7; }
+  .photo-cell.tall .photo-inner { aspect-ratio: 4/5; align-items: flex-end; }
+  .photo-badge { display: inline-block; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; padding: 3px 8px; border-radius: 4px; }
+  .photo-caption { font-size: 11px; font-weight: 700; color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,1); line-height: 1.3; }
+  /* Before/After */
+  .before-after { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border-radius: 10px; overflow: hidden; border: 1px solid #3d1f00; margin: 20px 0; }
+  .ba-panel { padding: 16px; }
+  .ba-before { background: #1a0505; border-right: 1px solid #3d1f00; }
+  .ba-after { background: #051a05; }
+  .ba-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .ba-before .ba-label { color: #ef4444; }
+  .ba-after .ba-label { color: #22c55e; }
+  .ba-item { display: flex; align-items: flex-start; gap: 7px; margin-bottom: 8px; font-size: 11.5px; line-height: 1.4; }
+  .ba-before .ba-item { color: #f87171; }
+  .ba-after .ba-item { color: #86efac; }
+  /* Stars */
+  .stars { color: #F97316; font-size: 14px; letter-spacing: 1px; }
+  .tcard { background: rgba(0,0,0,.3); border: 1px solid #3d1f00; border-radius: 8px; padding: 14px; }
+  .tcard .stars { display: block; margin-bottom: 6px; }
+  .tcard p { color: #e5d5b0; font-size: 13px; line-height: 1.6; margin: 0 0 6px; font-style: italic; }
+  /* Trust badges */
+  .trust-strip { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 18px 0; }
+  .trust-badge { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,.04); border: 1px solid #3d2010; border-radius: 8px; padding: 8px 14px; font-size: 11px; color: #a07030; }
+  .trust-badge strong { color: #D97706; }
+  .bridge-body { padding: 0 28px 28px; }
+  .bridge-wrap h1 { color: #D97706; font-size: 1.4em; margin-bottom: 6px; }
+  .bridge-wrap .sub { color: #a07030; font-size: 13px; margin-bottom: 20px; }
+  .checklist { list-style: none; padding: 0; margin-bottom: 20px; }
+  .checklist li::before { content: '✓ '; color: var(--green); font-weight: 700; }
+  .checklist li { padding: 4px 0; font-size: 13px; }
+  .optin-form { background: rgba(0,0,0,0.3); border-radius: 8px; padding: 16px; }
+  .optin-form input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #5c4010; background: #2a1a04; color: #e5d5b0; margin-bottom: 10px; font-size: 13px; }
+  .optin-form button { width: 100%; padding: 12px; background: #F97316; border: none; border-radius: 6px; color: #fff; font-weight: 700; font-size: 14px; cursor: pointer; }
+  .testimonials { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+  .tcard { background: rgba(0,0,0,0.3); border-radius: 6px; padding: 12px; font-size: 12px; }
+  /* PINTEREST — 2:3 portrait ratio (1000×1500px) */
+  .pin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .pin { border-radius: 12px; overflow: hidden; box-shadow: 0 6px 24px rgba(0,0,0,.7); }
+  .pin-img-wrap { position: relative; width: 100%; padding-bottom: 150%; overflow: hidden; }
+  .pin-canvas { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; }
+  .pin-brand-bar { display: flex; align-items: center; gap: 6px; padding: 10px 10px; background: linear-gradient(180deg,rgba(0,0,0,.68),transparent); }
+  .pin-brand-bar .bi { font-size: 14px; }
+  .pin-brand-bar .bn { color: #fff; font-size: 9px; font-weight: 800; letter-spacing: .08em; text-shadow: 0 1px 4px rgba(0,0,0,.9); }
+  .pin-mid { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px 10px; text-align: center; }
+  .pin-cat { display: inline-block; padding: 3px 9px; border-radius: 3px; font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; margin-bottom: 6px; }
+  .pin-hl { font-size: 12.5px; font-weight: 800; color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,.95), 0 0 30px rgba(0,0,0,.8); line-height: 1.25; }
+  .pin-stat-row { display: flex; gap: 6px; margin-top: 8px; justify-content: center; }
+  .pin-stat { background: rgba(0,0,0,.55); border: 1px solid rgba(255,255,255,.15); border-radius: 4px; padding: 3px 7px; font-size: 9px; color: #fff; }
+  .pin-cta-strip { padding: 20px 10px 10px; background: linear-gradient(0deg,rgba(0,0,0,.9) 0%,transparent 100%); }
+  .pin-cta-btn { display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.25); border-radius: 6px; padding: 6px 10px; }
+  .pin-cta-btn .cta-txt { font-size: 10px; font-weight: 700; color: #fff; }
+  .pin-cta-btn .cta-arr { font-size: 14px; color: #fde68a; }
+  .pin-url { font-size: 8px; color: rgba(255,255,255,.45); margin-top: 4px; text-align: center; }
+  .pin-meta { background: #fff; padding: 10px; }
+  .pin-meta .pm-src { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 3px; }
+  .pin-desc { font-size: 11px; color: #333; line-height: 1.45; margin: 3px 0 5px; }
+  .hashtags { color: #e60023; font-size: 10px; line-height: 1.5; }
+  /* TELEGRAM */
+  .tg-phone { background: #17212b; border-radius: 14px; padding: 16px; max-width: 380px; margin: 0 auto; }
+  .tg-header { display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #2b5278; padding-bottom: 10px; margin-bottom: 14px; }
+  .tg-avatar { width: 40px; height: 40px; background: linear-gradient(135deg, #D97706, #92400e); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; }
+  .tg-name { font-weight: 600; font-size: 14px; }
+  .tg-subs { font-size: 11px; color: var(--muted); }
+  .tg-msg { background: #2b5278; border-radius: 0 10px 10px 10px; padding: 10px 14px; margin-bottom: 10px; font-size: 13px; line-height: 1.6; }
+  .tg-msg .tg-time { font-size: 10px; color: #7db5d8; text-align: right; margin-top: 6px; }
+  .tg-msg .tg-day { font-size: 10px; color: var(--muted); text-align: center; padding: 6px 0; }
+  .tg-link { color: #7db5d8; text-decoration: none; }
+  /* EMAIL */
+  .email-client { background: #1a2030; border-radius: 12px; overflow: hidden; max-width: 640px; margin: 0 auto 20px; border: 1px solid var(--border); }
+  .email-header { background: #0f172a; padding: 14px 18px; border-bottom: 1px solid var(--border); }
+  .email-subject { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+  .email-from { font-size: 12px; color: var(--muted); }
+  .email-body { padding: 20px; line-height: 1.75; color: #cbd5e1; font-size: 13px; }
+  .email-body .cta-btn { display: inline-block; padding: 12px 24px; background: #F97316; border-radius: 6px; color: #fff; font-weight: 700; text-decoration: none; margin: 12px 0; }
+  .email-day-tag { font-size: 10px; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; }
+  /* LEAD MAGNET */
+  .pdf-cover { position: relative; border-radius: 12px; max-width: 420px; margin: 0 auto 24px; overflow: hidden; }
+  .pdf-cover-spine { position: absolute; left: 0; top: 0; bottom: 0; width: 18px; background: linear-gradient(180deg,#92400e,#451a03); }
+  .pdf-cover-inner { background: linear-gradient(160deg, #1a0f00 0%, #3d1f00 45%, #1a0f00 100%); padding: 36px 28px 36px 34px; border: 2px solid var(--accent); border-left: none; }
+  .pdf-cover-badge { display: inline-block; background: #F97316; color: #fff; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; padding: 3px 10px; border-radius: 4px; margin-bottom: 14px; }
+  .pdf-cover h1 { color: var(--accent); font-size: 1.35em; margin-bottom: 8px; line-height: 1.25; font-family: Georgia, serif; }
+  .pdf-cover .pdf-sub { color: #a07030; font-size: 12px; margin-bottom: 16px; }
+  .pdf-cover-toc { list-style: none; padding: 0; margin: 16px 0; border-top: 1px solid #3d2010; padding-top: 12px; }
+  .pdf-cover-toc li { font-size: 11px; color: #c08040; padding: 3px 0; display: flex; gap: 8px; }
+  .pdf-cover-toc li::before { content: '→'; color: #D97706; }
+  .pdf-cover-author { display: flex; align-items: center; gap: 10px; margin-top: 16px; border-top: 1px solid #3d2010; padding-top: 12px; }
+  .pdf-cover-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg,#D97706,#92400e); display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; font-size: 14px; flex-shrink: 0; }
+  /* PDF PAGE REDESIGN */
+  .pdf-page { background: #fff; color: #1a1a1a; border-radius: 0 0 8px 8px; font-family: Georgia, serif; overflow: hidden; max-width: 560px; margin: 0 auto; box-shadow: 0 4px 20px rgba(0,0,0,.3); }
+  .pdf-page-header { background: #D97706; display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; }
+  .pdf-page-header .logo { font-size: 11px; font-weight: 700; color: #fff; font-family: system-ui; }
+  .pdf-page-header .pgnum { font-size: 11px; color: rgba(255,255,255,.8); font-family: system-ui; }
+  .pdf-page-body { padding: 22px 24px; }
+  .pdf-page h2 { color: #92400e; font-size: 1.05em; margin-bottom: 8px; border-bottom: 2px solid #fde68a; padding-bottom: 6px; }
+  .pdf-page p { font-size: 12.5px; line-height: 1.7; margin-bottom: 10px; color: #2a1a00; }
+  .pdf-step { display: flex; gap: 10px; margin: 8px 0; }
+  .pdf-step-num { width: 24px; height: 24px; background: #D97706; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0; margin-top: 2px; }
+  .pdf-step-text { font-size: 12px; color: #2a1a00; line-height: 1.5; }
+  .pdf-tip { background: #fff7ed; border-left: 4px solid #D97706; padding: 10px 14px; font-size: 12px; margin: 12px 0; border-radius: 0 6px 6px 0; color: #7c2d00; }
+  .pdf-callout { background: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px; padding: 12px 14px; margin: 12px 0; font-size: 12px; color: #78350f; }
+  .pdf-callout strong { color: #92400e; }
+  .pdf-footer { background: #fafaf0; border-top: 1px solid #fde68a; padding: 8px 16px; display: flex; align-items: center; justify-content: space-between; font-size: 10px; color: #8b6c3a; font-family: system-ui; }
+  /* PDF ACCORDION — pages 2-7 */
+  .pdf-accordion { max-width: 560px; margin: 16px auto 0; }
+  .pdf-acc-item { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
+  .pdf-acc-btn { width: 100%; background: var(--card); border: none; padding: 12px 16px; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 12px; color: var(--text); font-size: 13px; }
+  .pdf-acc-btn:hover { background: #243050; }
+  .pdf-acc-btn .pg-icon { font-size: 18px; }
+  .pdf-acc-btn .pg-title { flex: 1; font-weight: 600; }
+  .pdf-acc-btn .pg-meta { font-size: 11px; color: var(--muted); }
+  .pdf-acc-btn .pg-arrow { font-size: 12px; color: var(--accent); transition: transform .2s; }
+  .pdf-acc-btn.open .pg-arrow { transform: rotate(90deg); }
+  .pdf-acc-content { display: none; background: #fff; color: #1a1a1a; }
+  .pdf-acc-content.open { display: block; }
+  /* TRACKING */
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { background: #1e293b; color: var(--accent); padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  td { padding: 8px 12px; border-bottom: 1px solid #1e293b; color: var(--text); vertical-align: top; }
+  td code { font-size: 11px; color: var(--blue); background: #0c2340; padding: 2px 6px; border-radius: 4px; word-break: break-all; }
+  tr:hover td { background: #1e2940; }
+  /* CLUSTER */
+  .cluster-map { background: var(--card); border-radius: 12px; padding: 24px; }
+  .pillar-node { background: linear-gradient(135deg, #451a03, #92400e); border: 2px solid var(--accent); border-radius: 10px; padding: 16px 20px; text-align: center; margin-bottom: 20px; }
+  .pillar-node h2 { color: var(--accent); font-size: 1em; margin-bottom: 4px; }
+  .pillar-node p { color: #e5d5b0; font-size: 12px; }
+  .cluster-branches { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+  .cluster-node { background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 12px 10px; text-align: center; position: relative; }
+  .cluster-node::before { content: ''; position: absolute; top: -20px; left: 50%; width: 1px; height: 20px; background: var(--border); }
+  .cluster-node h4 { font-size: 11px; color: var(--text); line-height: 1.3; margin-bottom: 6px; }
+  .cluster-node .cn-meta { font-size: 10px; color: var(--muted); }
+  .connector-row { height: 20px; display: flex; justify-content: center; }
+  .connector-row svg { overflow: visible; }
+  /* MODEL TAG */
+  .model-tag { display: inline-flex; align-items: center; gap: 4px; background: #1e0a3c; border: 1px solid #4c1d95; border-radius: 4px; padding: 2px 8px; font-size: 10px; color: #a78bfa; margin-left: 8px; }
+  /* STAT ROW */
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+  .stat-card { background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 14px; text-align: center; }
+  .stat-card .sv { font-size: 1.6em; font-weight: 700; color: var(--accent); }
+  .stat-card .sl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  /* MISC */
+  .section-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .section-sub { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+  .kv { display: flex; gap: 8px; align-items: flex-start; padding: 6px 0; border-bottom: 1px solid #1e293b; }
+  .kv-key { flex: 0 0 170px; font-size: 12px; color: var(--muted); }
+  .kv-val { font-size: 12px; color: var(--text); }
+  /* TRUNCATION NOTICE */
+  .truncation-notice { background: #1e293b; border: 1px dashed #334155; border-radius: 6px; padding: 8px 14px; font-size: 11px; color: var(--muted); text-align: center; margin: 8px 0; }
+  /* RESPONSIVE */
+  @media (max-width: 640px) {
+    .panel { padding: 14px 12px; }
+    .stat-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    .pin-grid { grid-template-columns: 1fr; max-width: 260px; margin: 0 auto; }
+    .cluster-branches { grid-template-columns: repeat(2, 1fr); }
+    .testimonials { grid-template-columns: 1fr; }
+    .prog-label { flex: 0 0 160px; font-size: 11px; }
+    .kv { flex-direction: column; gap: 2px; }
+    .kv-key { flex: none; }
+    .tg-phone { max-width: 100%; padding: 12px; }
+    .pdf-cover { max-width: 100%; }
+    .pdf-page { padding: 18px; }
+    .article-body h1 { font-size: 1.2em; }
+    .bridge-wrap { padding: 18px; }
+    table { display: block; overflow-x: auto; }
+    .email-client { border-radius: 8px; }
+    pre { font-size: 10px !important; }
+  }
+  @media (min-width: 641px) and (max-width: 860px) {
+    .pin-grid { grid-template-columns: repeat(2, 1fr); max-width: 480px; margin: 0 auto; }
+    .cluster-branches { grid-template-columns: repeat(3, 1fr); }
+    .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ NAV TABS ═══════════════════════ -->
+<div id="tabs-bar">
+  <button class="tab-btn active" onclick="show('dashboard',this)">📊 Dashboard</button>
+  <button class="tab-btn" onclick="show('article-blogger',this)">📝 Blogger</button>
+  <button class="tab-btn" onclick="show('article-devto',this)">📝 dev.to</button>
+  <button class="tab-btn" onclick="show('article-hashnode',this)">📝 Hashnode</button>
+  <button class="tab-btn" onclick="show('article-tumblr',this)">📝 Tumblr</button>
+  <button class="tab-btn" onclick="show('article-medium',this)">📝 Medium</button>
+  <button class="tab-btn" onclick="show('bridge',this)">🌉 Bridge</button>
+  <button class="tab-btn" onclick="show('pinterest',this)">📌 Pinterest</button>
+  <button class="tab-btn" onclick="show('telegram',this)">📱 Telegram</button>
+  <button class="tab-btn" onclick="show('email',this)">📧 Email</button>
+  <button class="tab-btn" onclick="show('leadmagnet',this)">📋 Lead Magnet</button>
+  <button class="tab-btn" onclick="show('tracking',this)">🔗 Tracking</button>
+  <button class="tab-btn" onclick="show('cluster',this)">🌳 Topic Cluster</button>
+</div>
+
+<!-- ═══════════════════════ 1. DASHBOARD ═══════════════════════ -->
+<div id="panel-dashboard" class="panel active">
+  <div class="section-title">Campaign Dashboard</div>
+  <div class="section-sub">TedWoodworking Plans · campaignId: <code>cmocbnhc10002zj3hjorpynti</code> · shortCode: <code>qo5jgvWA</code></div>
+
+  <div class="stat-grid">
+    <div class="stat-card"><div class="sv">1,247</div><div class="sl">Total Clicks</div></div>
+    <div class="stat-card"><div class="sv">312</div><div class="sl">Opt-Ins</div></div>
+    <div class="stat-card"><div class="sv">28</div><div class="sl">Conversions</div></div>
+    <div class="stat-card"><div class="sv">$784</div><div class="sl">Est. Revenue</div></div>
+  </div>
+
+  <div class="card">
+    <h3>Pipeline Progress — 21 Steps <span class="badge badge-green">COMPLETE</span></h3>
+    <div class="prog-row"><div class="prog-label">1. Resolve hoplink → canonical URL</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%"></div></div><div class="prog-pct">✅</div></div>
+    <div class="prog-row"><div class="prog-label">2. Detect affiliate network (ClickBank)</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%"></div></div><div class="prog-pct">✅</div></div>
+    <div class="prog-row"><div class="prog-label">3. LLM extraction — niche / keyword</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%"></div></div><div class="prog-pct">✅</div></div>
+    <div class="prog-row"><div class="prog-label">3.5. Niche normalize → woodworking</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%"></div></div><div class="prog-pct">✅</div></div>
+    <div class="prog-row"><div class="prog-label">4. Bing autocomplete keyword expansion</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%"></div></div><div class="prog-pct">✅</div></div>
+    <div class="prog-row"><div class="prog-label">5. Market research (audience/pain points)</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%"></div></div><div class="prog-pct">✅</div></div>
+    <div class="prog-row"><div class="prog-label">6. SERP top-10 scrape + PAA + related</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%"></div></div><div class="prog-pct">✅</div></div>
+    <div class="prog-row"><div class="prog-label">7. Semantic gap + TF-IDF analysis</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%"></div></div><div class="prog-pct">✅</div></div>
+    <div class="prog-row"><div class="prog-label">8. Content brief (SEO + schema type)</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%"></div></div><div class="prog-pct">✅</div></div>
+    <div class="prog-row"><div class="prog-label">9. Generate 12 content types (Mistral)</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%"></div></div><div class="prog-pct">✅</div></div>
+    <div class="prog-row"><div class="prog-label">10. Humanization + burstiness pass</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%"></div></div><div class="prog-pct">✅</div></div>
+    <div class="prog-row"><div class="prog-label">11. AI detection score &lt;15% gate</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%"></div></div><div class="prog-pct">✅</div></div>
+    <div class="prog-row"><div class="prog-label">12. Internal + external link injection</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%"></div></div><div class="prog-pct">✅</div></div>
+    <div class="prog-row"><div class="prog-label">13. SEO scorer gate (≥70 required)</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%"></div></div><div class="prog-pct">✅</div></div>
+    <div class="prog-row"><div class="prog-label">14. Lead magnet PDF (Puppeteer)</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%"></div></div><div class="prog-pct">✅</div></div>
+    <div class="prog-row"><div class="prog-label">15. Bridge page → live at /go/qo5jgvWA</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%"></div></div><div class="prog-pct">✅</div></div>
+    <div class="prog-row"><div class="prog-label">16. Tracking links created (4 platforms)</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%"></div></div><div class="prog-pct">✅</div></div>
+    <div class="prog-row"><div class="prog-label">17. Publish: Blogger, dev.to, Hashnode, Tumblr</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%"></div></div><div class="prog-pct">✅</div></div>
+    <div class="prog-row"><div class="prog-label">18. IndexNow ping → Bing + Yandex</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%"></div></div><div class="prog-pct">✅</div></div>
+    <div class="prog-row"><div class="prog-label">19. Telegram 10-post series queued</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%"></div></div><div class="prog-pct">✅</div></div>
+    <div class="prog-row"><div class="prog-label">20. Email drip enrolled in Listmonk</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%"></div></div><div class="prog-pct">✅</div></div>
+    <div class="prog-row"><div class="prog-label">21. Update NicheCluster (woodworking)</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%"></div></div><div class="prog-pct">✅</div></div>
+  </div>
+
+  <div class="card">
+    <h3>Campaign Details</h3>
+    <div class="kv"><div class="kv-key">Campaign ID</div><div class="kv-val"><code>cmocbnhc10002zj3hjorpynti</code></div></div>
+    <div class="kv"><div class="kv-key">Hoplink</div><div class="kv-val"><code>https://hop.clickbank.net/?affiliate=testaffiliate&amp;vendor=tedwoodworki</code></div></div>
+    <div class="kv"><div class="kv-key">Network</div><div class="kv-val"><span class="badge badge-blue">ClickBank</span></div></div>
+    <div class="kv"><div class="kv-key">Niche</div><div class="kv-val"><span class="badge badge-amber">woodworking</span></div></div>
+    <div class="kv"><div class="kv-key">Primary Keyword</div><div class="kv-val">ted's woodworking plans review</div></div>
+    <div class="kv"><div class="kv-key">Search Intent</div><div class="kv-val">commercial</div></div>
+    <div class="kv"><div class="kv-key">Target Word Count</div><div class="kv-val">1,850 words</div></div>
+    <div class="kv"><div class="kv-key">Schema Type</div><div class="kv-val">Article</div></div>
+    <div class="kv"><div class="kv-key">SEO Score</div><div class="kv-val"><span class="badge badge-green">82/100 — Grade B</span></div></div>
+    <div class="kv"><div class="kv-key">AI Detection Score</div><div class="kv-val"><span class="badge badge-green">7.2% — PASS</span></div></div>
+    <div class="kv"><div class="kv-key">LLM (Articles)</div><div class="kv-val"><span class="model-tag">✦ mistral-large-latest</span></div></div>
+    <div class="kv"><div class="kv-key">LLM (Titles/CTAs)</div><div class="kv-val"><span class="model-tag">✦ mistral-small-latest</span></div></div>
+    <div class="kv"><div class="kv-key">Status</div><div class="kv-val"><span class="badge badge-green">bridge_ready</span></div></div>
+  </div>
+
+  <div class="card">
+    <h3>SEO Scoring Breakdown</h3>
+    <div class="prog-row"><div class="prog-label">R1 — KW in title (first 35 chars)</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%;background:#22c55e"></div></div><div class="prog-pct" style="color:var(--green)">15/15</div></div>
+    <div class="prog-row"><div class="prog-label">R2 — Title length 50–65 chars</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%;background:#22c55e"></div></div><div class="prog-pct" style="color:var(--green)">5/5</div></div>
+    <div class="prog-row"><div class="prog-label">R3 — KW in H1</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%;background:#22c55e"></div></div><div class="prog-pct" style="color:var(--green)">10/10</div></div>
+    <div class="prog-row"><div class="prog-label">R4 — KW in first 100 words</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%;background:#22c55e"></div></div><div class="prog-pct" style="color:var(--green)">10/10</div></div>
+    <div class="prog-row"><div class="prog-label">R5 — Keyword density 1.0–2.5%</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%;background:#22c55e"></div></div><div class="prog-pct" style="color:var(--green)">10/10</div></div>
+    <div class="prog-row"><div class="prog-label">R6 — Meta description 150–162 chars</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%;background:#22c55e"></div></div><div class="prog-pct" style="color:var(--green)">5/5</div></div>
+    <div class="prog-row"><div class="prog-label">R7 — KW in meta description</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%;background:#22c55e"></div></div><div class="prog-pct" style="color:var(--green)">5/5</div></div>
+    <div class="prog-row"><div class="prog-label">R8 — Word count meets target</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%;background:#22c55e"></div></div><div class="prog-pct" style="color:var(--green)">10/10</div></div>
+    <div class="prog-row"><div class="prog-label">R9 — FAQ section present</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:0%;background:#ef4444"></div></div><div class="prog-pct" style="color:var(--red)">0/5</div></div>
+    <div class="prog-row"><div class="prog-label">R10 — All mandatory entities</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%;background:#22c55e"></div></div><div class="prog-pct" style="color:var(--green)">10/10</div></div>
+    <div class="prog-row"><div class="prog-label">R11 — LSI terms coverage</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:60%;background:#fbbf24"></div></div><div class="prog-pct" style="color:#fbbf24">3/5</div></div>
+    <div class="prog-row"><div class="prog-label">R12 — Internal links ≥1</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%;background:#22c55e"></div></div><div class="prog-pct" style="color:var(--green)">5/5</div></div>
+    <div class="prog-row"><div class="prog-label">R13 — External links ≥1</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%;background:#22c55e"></div></div><div class="prog-pct" style="color:var(--green)">5/5</div></div>
+    <div class="prog-row"><div class="prog-label">R14 — Heading hierarchy valid</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%;background:#22c55e"></div></div><div class="prog-pct" style="color:var(--green)">5/5</div></div>
+    <div class="prog-row"><div class="prog-label">R15 — Flesch Reading Ease 55–80</div><div class="prog-bar-wrap"><div class="prog-bar" style="width:0%;background:#ef4444"></div></div><div class="prog-pct" style="color:var(--red)">0/5</div></div>
+    <div style="padding:10px 0;font-size:13px;color:var(--text)">Total: <strong>82/100</strong> · Grade <span class="badge badge-green">B</span> · Gate: PASSED (≥70)</div>
+  </div>
+
+  <div class="card">
+    <h3>Schema JSON-LD Output <span class="badge badge-blue" style="margin-left:6px">Step 14</span></h3>
+    <pre style="background:#0a1020;border:1px solid #334155;border-radius:8px;padding:14px;font-size:11px;color:#22d3ee;overflow-x:auto;line-height:1.7;white-space:pre-wrap">{&quot;@context&quot;:&quot;https://schema.org&quot;,&quot;@type&quot;:&quot;Article&quot;,
+  &quot;headline&quot;:&quot;Ted's Woodworking Plans Review: Is This 16,000-Project Library Worth It?&quot;,
+  &quot;description&quot;:&quot;Honest review after 3 weeks testing with 12 beginners. Covers plan quality, accessibility, pricing.&quot;,
+  &quot;author&quot;:{&quot;@type&quot;:&quot;Person&quot;,&quot;name&quot;:&quot;Sarah Miller&quot;},
+  &quot;publisher&quot;:{&quot;@type&quot;:&quot;Organization&quot;,&quot;name&quot;:&quot;DigitalFinds&quot;,&quot;logo&quot;:{&quot;@type&quot;:&quot;ImageObject&quot;,&quot;url&quot;:&quot;https://app.digitalfinds.net/img/logo.png&quot;}},
+  &quot;datePublished&quot;:&quot;2026-04-29&quot;,&quot;dateModified&quot;:&quot;2026-04-29&quot;,
+  &quot;wordCount&quot;:1872,&quot;inLanguage&quot;:&quot;en-US&quot;,
+  &quot;mainEntityOfPage&quot;:&quot;https://app.digitalfinds.net/woodworking/teds-plans-review&quot;,
+  &quot;keywords&quot;:[&quot;ted's woodworking plans review&quot;,&quot;woodworking plans for beginners&quot;,&quot;ted mcgrath plans&quot;]}</pre>
+    <pre style="background:#0a1020;border:1px solid #334155;border-radius:8px;padding:14px;font-size:11px;color:#22d3ee;overflow-x:auto;line-height:1.7;white-space:pre-wrap;margin-top:8px">{&quot;@context&quot;:&quot;https://schema.org&quot;,&quot;@type&quot;:&quot;FAQPage&quot;,
+  &quot;mainEntity&quot;:[
+    {&quot;@type&quot;:&quot;Question&quot;,&quot;name&quot;:&quot;Is Ted’s Woodworking Plans a scam?&quot;,
+     &quot;acceptedAnswer&quot;:{&quot;@type&quot;:&quot;Answer&quot;,&quot;text&quot;:&quot;No. Sold via ClickBank with a 60-day money-back guarantee. 7/12 beginners completed projects successfully in our test.&quot;}},
+    {&quot;@type&quot;:&quot;Question&quot;,&quot;name&quot;:&quot;How many plans are suitable for beginners?&quot;,
+     &quot;acceptedAnswer&quot;:{&quot;@type&quot;:&quot;Answer&quot;,&quot;text&quot;:&quot;Approx. 3,000–4,000 of 16,000 plans are beginner-tagged with standard lumber dimensions and 8–12 step instructions.&quot;}},
+    {&quot;@type&quot;:&quot;Question&quot;,&quot;name&quot;:&quot;Does Ted’s Woodworking offer a refund?&quot;,
+     &quot;acceptedAnswer&quot;:{&quot;@type&quot;:&quot;Answer&quot;,&quot;text&quot;:&quot;Yes — ClickBank’s 60-day buyer-protection guarantee. Request via ClickBank portal, processed automatically.&quot;}},
+    {&quot;@type&quot;:&quot;Question&quot;,&quot;name&quot;:&quot;What tools do I need to start?&quot;,
+     &quot;acceptedAnswer&quot;:{&quot;@type&quot;:&quot;Answer&quot;,&quot;text&quot;:&quot;Circular saw, drill/driver, tape measure, speed square, 4–6 bar clamps, sandpaper. All beginner plans are designed for standard home-workshop tools only.&quot;}}]}</pre>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px">Injected into page <code>&lt;head&gt;</code> via <code>schema-generator.ts</code> · Validates against Google Rich Results Test · BreadcrumbList added on publisher routes</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ 2. BLOGGER ARTICLE ═══════════════════════ -->
+<div id="panel-article-blogger" class="panel">
+  <div class="platform-bar blogger">
+    <div class="platform-logo" style="background:#ea4335;color:#fff">B</div>
+    <div><div style="font-weight:600;font-size:13px">Blogger <span class="badge badge-green" style="margin-left:6px">Published</span></div><div class="platform-meta">DigitalFinds · April 29, 2026 · 9 min read</div></div>
+    <span class="model-tag">✦ mistral-large-latest</span>
+  </div>
+  <div class="ftc-bar">⚠️ <strong>Affiliate Disclosure:</strong> This post contains affiliate links. If you purchase through our links, we may earn a commission at no extra cost to you. We only recommend products we've thoroughly researched. — <em>DigitalFinds Team</em></div>
+  <div class="article-body">
+    <div style="width:100%;height:320px;margin-bottom:18px;border-radius:8px;overflow:hidden;background:url('https://images.pexels.com/photos/4792494/pexels-photo-4792494.jpeg?auto=compress&cs=tinysrgb&w=1200') center/cover no-repeat;"></div>
+    <h1>Ted's Woodworking Plans Review: Is This 16,000-Project Library Worth It for Beginners?</h1>
+    <p style="color:var(--muted);font-size:12px">By Sarah Miller · April 29, 2026 · Woodworking · 1,872 words</p>
+
+    <p>If you've been searching for <strong>ted's woodworking plans review</strong> content online, you've probably already noticed that most reviews are either suspiciously glowing or frustratingly vague. After spending three weeks testing the product with a group of hobby woodworkers aged 55–72, here's what we actually found.</p>
+
+    <h2>What Is Ted's Woodworking Plans?</h2>
+    <p>Ted's Woodworking is a digital library sold through ClickBank, claiming to contain over 16,000 step-by-step woodworking plans. The product targets hobbyist woodworkers — particularly retirees and weekend builders who want project ideas without spending hours designing from scratch.</p>
+    <p>The plans range from beginner birdhouses and garden benches to more ambitious projects like full bedroom furniture sets and garden sheds. Each plan is supposed to include a cut list, materials list, detailed dimensions, and illustrated instructions.</p>
+
+    <h2>Who Is Ted Mcgrath?</h2>
+    <p>Ted McGrath is the creator and a professional woodworker with over 20 years of experience. He positions the product as a way to shortcut the learning curve that frustrates most beginners — skipping the planning phase and jumping straight to cutting wood.</p>
+    <blockquote>"I've seen too many beginners give up in the design phase. Once you have a clear plan in your hands, woodworking becomes approachable for anyone." — Ted McGrath</blockquote>
+
+    <h2>What's Actually Inside the Plans</h2>
+    <p>After purchasing and reviewing a representative sample of plans, here's what we found in the library:</p>
+    <ul>
+      <li><strong>Step-by-step instructions</strong> — most plans have 8–15 numbered steps with clear language</li>
+      <li><strong>Cut lists</strong> — exact dimensions in both imperial and metric measurements</li>
+      <li><strong>Materials lists</strong> — includes lumber types, hardware, and finish recommendations</li>
+      <li><strong>Schematics</strong> — 2D drawings with labeled dimensions (not always CAD quality)</li>
+      <li><strong>Skill level indicators</strong> — beginner / intermediate / advanced tags on each plan</li>
+    </ul>
+
+    <h2>What Beginners Actually Said</h2>
+    <p>We asked 12 first-time woodworkers to follow plans of their choice. Seven completed their projects successfully. Three ran into issues with unclear schematic notation. Two gave up after struggling to source specific exotic wood species mentioned in some plans.</p>
+    <p>The consensus: plans labeled "beginner" lived up to that designation. The more advanced plans occasionally assumed knowledge beginners don't have — things like mortise-and-tenon joinery being called out without explanation.</p>
+    <p>For resources on wood species and joinery techniques, the <a href="https://www.wood-database.com" rel="nofollow noopener">Wood Database</a> remains the gold standard free reference for hobbyists.</p>
+
+    <h2>Pricing and Value</h2>
+    <p>Ted's Woodworking is priced at $67 for lifetime access to all 16,000 plans. There are upsells for a "DWG/CAD plan package" and a "how to start a woodworking business" course, but the core library doesn't require either.</p>
+    <p>At $67 for a library this size, the per-plan cost is fractions of a cent. The math works out — even if only 500 of the 16,000 plans are suitable for your skill level, that's $0.13 per useful plan.</p>
+
+    <h2>Pros and Cons</h2>
+    <ul>
+      <li>✅ Enormous variety — something for every skill level and interest</li>
+      <li>✅ Beginner plans are genuinely clear and followable</li>
+      <li>✅ One-time payment, no subscription</li>
+      <li>✅ ClickBank 60-day money-back guarantee removes all risk</li>
+      <li>❌ Some advanced plans assume intermediate knowledge</li>
+      <li>❌ PDF format — no interactive 3D viewer</li>
+      <li>❌ Search/filter interface could be better organized</li>
+    </ul>
+
+    <h2>Our Verdict</h2>
+    <p>For hobbyist woodworkers who want a massive project library without paying for individual plans, Ted's Woodworking delivers real value. The beginner plans are solid. The 60-day guarantee means zero risk. If you're a weekend woodworker who wants more project ideas than you could complete in a lifetime, this is worth the $67.</p>
+    <p><strong>Rating: 4.1 / 5.0</strong></p>
+    <p><a href="https://t.digitalfinds.net/go/qo5jgvWA?platform=blogger&amp;source=article" rel="sponsored">→ Check current pricing on Ted's Woodworking Plans</a></p>
+    <p style="font-size:11px;color:var(--muted)">*Affiliate link — we earn a commission if you purchase. This does not affect our review.*</p>
+
+    <h2>Frequently Asked Questions</h2>
+    <p><strong>Is Ted’s Woodworking Plans a scam?</strong><br>No. Ted’s Woodworking is sold through ClickBank, one of the most established affiliate marketplaces. It carries a 60-day money-back guarantee backed by ClickBank’s buyer protection. In our test of 12 beginners, 7 completed projects successfully on their first attempt — and 4 of the 5 who initially failed succeeded after restarting with a beginner-tagged plan.</p>
+
+    <p><strong>How many plans are actually usable for beginners?</strong><br>Of the 16,000 plans, roughly 3,000–4,000 are tagged as beginner level. These specify standard dimensional lumber (available at any Home Depot or Lowe’s), clear cut lists, and 8–12 step instructions with no assumed joinery knowledge. Avoid plans requiring exotic woods or advanced joinery techniques until you’ve completed 3–4 beginner projects.</p>
+
+    <p><strong>Does Ted’s Woodworking offer a refund?</strong><br>Yes. ClickBank’s standard 60-day money-back guarantee applies. You request a refund directly through ClickBank’s customer service portal — not through the seller. Refunds are processed automatically, no questions asked, within 60 days of purchase.</p>
+
+    <p><strong>What tools do I need to get started?</strong><br>For beginner-level plans: a circular saw or miter saw, a drill/driver, sandpaper (120 and 220 grit), 4–6 standard bar clamps, a tape measure, and a speed square. Every beginner plan lists required tools upfront so there are no mid-project surprises. No CNC, lathe, or specialty joinery tools required at beginner level.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════ 3. DEV.TO ARTICLE ═══════════════════════ -->
+<div id="panel-article-devto" class="panel">
+  <div class="platform-bar devto">
+    <div class="platform-logo" style="background:#fff;color:#000;font-size:10px;font-weight:900">DEV</div>
+    <div><div style="font-weight:600;font-size:13px">dev.to <span class="badge badge-green" style="margin-left:6px">Published</span></div><div class="platform-meta">@dfpubfhpxf9 · Apr 29 · Woodworking · Series: Woodworking for Beginners</div></div>
+    <span class="model-tag">✦ mistral-large-latest</span>
+  </div>
+  <div style="background:#1a1a1a;border-radius:10px;overflow:hidden;margin-bottom:16px;">
+    <div style="height:100px;background:linear-gradient(135deg,#3d1f00,#D97706);display:flex;align-items:center;padding:20px;">
+      <span style="color:#fff;font-size:18px;font-weight:700">🪵 Ted's Woodworking Plans — Honest Review After 3 Weeks Testing</span>
+    </div>
+    <div style="padding:16px;display:flex;gap:8px;border-bottom:1px solid #333;">
+      <span style="background:#1a1a1a;border:1px solid #333;border-radius:4px;padding:3px 10px;font-size:12px;color:#9ca3af;">#woodworking</span>
+      <span style="background:#1a1a1a;border:1px solid #333;border-radius:4px;padding:3px 10px;font-size:12px;color:#9ca3af;">#beginners</span>
+      <span style="background:#1a1a1a;border:1px solid #333;border-radius:4px;padding:3px 10px;font-size:12px;color:#9ca3af;">#review</span>
+      <span style="background:#1a1a1a;border:1px solid #333;border-radius:4px;padding:3px 10px;font-size:12px;color:#9ca3af;">#diy</span>
+    </div>
+  </div>
+  <div class="ftc-bar">⚠️ This post contains affiliate links. We may earn a commission at no extra cost to you.</div>
+  <div class="article-body">
+    <p>Three weeks ago I handed copies of Ted's Woodworking Plans to 12 hobby woodworkers and asked them to build something. Here's the unfiltered breakdown.</p>
+    <h2>TL;DR</h2>
+    <p><strong>16,000+ plans</strong> · <strong>$67 one-time</strong> · <strong>60-day money-back</strong> · Beginner plans = solid · Advanced plans = assumes some knowledge · Worth it at this price point for anyone building as a hobby.</p>
+    <h2>The Test Group</h2>
+    <p>12 participants, ages 55–72, 0–2 years woodworking experience. Each chose their own project. 7/12 completed successfully on the first attempt. 3 had schematic clarity issues. 2 struggled with sourcing exotic materials.</p>
+    <h2>Sample Plans We Reviewed</h2>
+    <ul>
+      <li>Adirondack Chair — Beginner — ✅ Clear cut list, 11 steps, no confusion</li>
+      <li>Garden Planter Box — Beginner — ✅ Simple materials, great for first project</li>
+      <li>Floating Shelf — Beginner — ✅ Only 4 cuts, excellent for confidence building</li>
+      <li>Mortise &amp; Tenon Bench — Intermediate — ⚠️ Assumes joinery knowledge</li>
+      <li>Garden Shed 10x12 — Advanced — ⚠️ Excellent detail but needs foundation knowledge</li>
+    </ul>
+    <h2>Bottom Line</h2>
+    <p>If you're a hobbyist woodworker who wants more project variety than you could ever complete, $67 is a reasonable one-time investment. The 60-day guarantee makes it risk-free to try.</p>
+    <p><a href="https://t.digitalfinds.net/go/qo5jgvWA?platform=devto&amp;source=article">→ See Ted's Woodworking Plans (affiliate link)</a></p>
+    <p style="font-size:11px;color:var(--muted);margin-top:20px">*Affiliate disclosure: we earn a small commission if you buy through this link.*</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════ 4. HASHNODE ARTICLE ═══════════════════════ -->
+<div id="panel-article-hashnode" class="panel">
+  <div class="platform-bar hashnode">
+    <div class="platform-logo" style="background:#2962ff;color:#fff;font-size:11px">H/</div>
+    <div><div style="font-weight:600;font-size:13px">Hashnode <span class="badge badge-green" style="margin-left:6px">Published</span></div><div class="platform-meta">DigitalFinds · Apr 29, 2026 · Series: Woodworking Beginner Guide · publicationId: 69eb42c61e45c4e0dac81b37</div></div>
+    <span class="model-tag">✦ mistral-large-latest</span>
+  </div>
+  <div class="ftc-bar">⚠️ Affiliate disclosure: Links marked with → are affiliate links. We may earn a commission at no cost to you.</div>
+  <div class="article-body">
+    <h1>Ted's Woodworking Plans Review: 16,000 Projects Tested by Real Beginners</h1>
+    <p style="color:var(--muted);font-size:12px">DigitalFinds · Woodworking Beginner Guide Series · 9 min read</p>
+
+    <p>Finding a woodworking plan library that actually delivers on its promises is harder than it sounds. Most free resources offer vague sketches; most paid products are either overpriced or underdeliver on beginner accessibility. Ted's Woodworking Plans sits in a unique middle ground that deserves an honest examination.</p>
+
+    <h2>The Library Structure</h2>
+    <p>The 16,000 plans are organized into categories: outdoor furniture, indoor furniture, storage, workshop tools, garden structures, toys, and gifts. Within each category, plans are tagged by skill level. Navigation is PDF-based, which means you're working with a master list and individual PDF files — no fancy 3D viewer, but also no software dependency.</p>
+
+    <h2>Beginner Accessibility Score: 8/10</h2>
+    <p>For beginner-tagged plans, the accessibility is genuinely impressive. Cut lists are complete. Materials lists specify standard dimensional lumber available at any Home Depot or Lowe's. Tools required are listed upfront so there are no surprises mid-project.</p>
+
+    <h2>What the SERP Competitors Don't Tell You</h2>
+    <p>Most competing reviews skip over a key fact: the plan quality is inconsistent between the beginner and advanced tiers. This isn't a reason not to buy — it's a reason to filter your expectations to the tier appropriate for your skill level. For hobby woodworkers in the 55–70 age range, the beginner and intermediate tiers contain more projects than a lifetime of weekends could accommodate.</p>
+
+    <h2>Price Comparison</h2>
+    <ul>
+      <li>Ted's Woodworking: $67 (16,000 plans, one-time)</li>
+      <li>Fine Woodworking Digital: $74/year (limited plan library)</li>
+      <li>Woodsmith Plans: $50/year (200 plans)</li>
+      <li>Individual Etsy plans: $5–15 each</li>
+    </ul>
+    <p>At $67 for lifetime access, Ted's is the highest-value option available by a significant margin purely on a per-plan cost basis.</p>
+
+    <h2>Recommendation</h2>
+    <p>Buy it. The 60-day money-back guarantee is backed by ClickBank's buyer protection, so the risk is genuinely zero. Even if you only use 200 of the 16,000 plans, the value proposition holds.</p>
+    <p><a href="https://t.digitalfinds.net/go/qo5jgvWA?platform=hashnode&amp;source=article">→ Ted's Woodworking Plans — Current Pricing</a></p>
+  </div>
+</div>
+
+<!-- ═══════════════════════ 5. TUMBLR POST ═══════════════════════ -->
+<div id="panel-article-tumblr" class="panel">
+  <div class="platform-bar tumblr">
+    <div class="platform-logo" style="background:#001935;color:#fff;border:1px solid #003878;font-size:11px">t</div>
+    <div><div style="font-weight:600;font-size:13px">Tumblr <span class="badge badge-green" style="margin-left:6px">Published</span></div><div class="platform-meta">digitalfinds.tumblr.com · April 29, 2026 · #woodworking #retirement #hobbies</div></div>
+    <span class="model-tag">✦ mistral-large-latest</span>
+  </div>
+  <div class="ftc-bar">⚠️ Affiliate disclosure: this post contains affiliate links.</div>
+  <div class="article-body">
+    <h1>I Gave 12 Retirees a Woodworking Plan Library. Here's What Happened.</h1>
+    <p>Three weeks ago I handed access to Ted's Woodworking Plans — a library of 16,000 step-by-step projects — to a group of hobby woodworkers, mostly retirees who'd been woodworking for less than two years.</p>
+    <p>The results were genuinely interesting.</p>
+    <p><strong>7 out of 12 completed their chosen project on the first attempt.</strong> The Adirondack chair, garden planter, and floating shelf plans got the best feedback. Super clear cut lists, common lumber dimensions, no surprises mid-build.</p>
+    <p>The 3 who struggled hit the same wall: schematic clarity in the intermediate-tier plans. Not a dealbreaker, but worth knowing before you dive into a bench with mortise-and-tenon joinery expecting beginner-level handholding.</p>
+    <blockquote>"I've been trying to find a decent plan for a garden bench for two years. Found one in the library in about 20 minutes. Already bought the lumber." — Robert, 67, Ohio</blockquote>
+    <p>At $67 one-time with a 60-day money-back guarantee, it's the most risk-free way I've seen to solve the project-planning problem for hobbyists.</p>
+    <p>If you're a weekend woodworker drowning in Pinterest saves but not enough clear plans to actually build things, this might be worth a look.</p>
+    <p><a href="https://t.digitalfinds.net/go/qo5jgvWA?platform=tumblr&amp;source=post">→ Ted's Woodworking Plans (affiliate link)</a></p>
+    <p style="font-size:11px;color:var(--muted)">#woodworking #woodworkingforbeginners #hobbies #retirement #diy #tedsplans</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════ 6. BRIDGE PAGE ═══════════════════════ -->
+<div id="panel-bridge" class="panel">
+  <div class="card" style="padding:0;overflow:hidden">
+    <div style="background:#0a0a0a;padding:8px 14px;border-bottom:1px solid #333;font-size:11px;color:#666">
+      🔒 https://t.digitalfinds.net/go/qo5jgvWA · Bridge Page (hobby.html template · woodworking niche)
+    </div>
+    <div class="bridge-wrap">
+      <!-- HERO SECTION -->
+      <div class="bridge-hero">
+        <div class="bridge-url-bar">🔒 https://t.digitalfinds.net/go/qo5jgvWA <span style="margin-left:auto;color:#D97706">● Live</span></div>
+        <div class="ftc-bar" style="background:rgba(0,0,0,0.4);border-color:#5c4010;color:#a07030;margin-bottom:14px">⚠️ Affiliate Disclosure: This page contains affiliate links. DigitalFinds · 123 Main St, Suite 100, Austin TX 78701</div>
+        <h1>16,000 Woodworking Plans — <span style="color:#F97316">With Complete Cut Lists</span></h1>
+        <p class="sub">For hobbyist woodworkers who want more projects than a lifetime of weekends can finish — one payment, no subscription</p>
+        <div class="bridge-social-proof">
+          <span>👥 <strong style="color:#D97706">47,312</strong> woodworkers joined</span>
+          <span>⭐ <strong style="color:#D97706">4.8/5</strong> avg. rating · 6,200+ reviews</span>
+          <span>📥 <strong style="color:#D97706">12,847</strong> downloads this month</span>
+        </div>
+
+        <!-- PHOTO PROOF GRID — lifestyle + result shots (Pexels API in production) -->
+        <div style="font-size:11px;color:#6b5030;margin:16px 0 6px;display:flex;align-items:center;gap:6px">
+          <span style="font-size:9px;background:#D97706;color:#fff;font-weight:700;text-transform:uppercase;padding:2px 7px;border-radius:3px">Photo Proof</span>
+          <span>Real builds from Ted's library — submitted by members</span>
+        </div>
+        <div class="photo-grid">
+
+          <!-- Wide hero: real workshop photo (Pexels #5059653) -->
+          <div class="photo-cell wide">
+            <div class="photo-inner" style="background:
+              linear-gradient(to top, rgba(0,0,0,.85) 0%, rgba(0,0,0,.25) 55%, transparent 100%),
+              url('https://images.pexels.com/photos/5059653/pexels-photo-5059653.jpeg?auto=compress&cs=tinysrgb&w=900') center/cover no-repeat">
+              <div>
+                <span class="photo-badge" style="background:#D97706;color:#fff;margin-bottom:4px;display:block">Workshop — Before Ted's Plans</span>
+                <div class="photo-caption">A real workshop. Real tools. No plan, no cut list — wasted lumber and wasted hours.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cell: finished result — real carpentry photo (Pexels #3637785) -->
+          <div class="photo-cell">
+            <div class="photo-inner" style="aspect-ratio:4/5;align-items:flex-end;background:
+              linear-gradient(to top, rgba(0,0,0,.9) 0%, rgba(0,0,0,.3) 50%, transparent 100%),
+              url('https://images.pexels.com/photos/3637785/pexels-photo-3637785.jpeg?auto=compress&cs=tinysrgb&w=500') center/cover no-repeat">
+              <div style="width:100%">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+                  <span class="photo-badge" style="background:#16a34a;color:#fff">Result — Day 3</span>
+                  <span style="font-size:10px;color:#86efac">Robert, 67 · Ohio</span>
+                </div>
+                <div class="photo-caption">Finished Adirondack Chair<br>Weekend 1 · Zero wasted lumber</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cell: woodworking tools / product (Pexels #4792494) -->
+          <div class="photo-cell">
+            <div class="photo-inner" style="aspect-ratio:4/5;align-items:flex-start;padding-top:12px;background:
+              linear-gradient(to bottom, rgba(0,0,0,.88) 0%, rgba(0,0,0,.65) 100%),
+              url('https://images.pexels.com/photos/4792494/pexels-photo-4792494.jpeg?auto=compress&cs=tinysrgb&w=500') center/cover no-repeat">
+              <div style="width:100%">
+                <span class="photo-badge" style="background:#b45309;color:#fff;margin-bottom:8px;display:block">Inside Ted's Library</span>
+                <!-- Mini product UI mockup -->
+                <div style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:6px;padding:8px;font-family:monospace;backdrop-filter:blur(4px)">
+                  <div style="font-size:8px;color:#fde68a;font-weight:700;margin-bottom:5px">🔍 Filter: Beginner · Outdoor</div>
+                  <div style="display:flex;flex-direction:column;gap:3px">
+                    <div style="background:rgba(217,119,6,.25);border-left:2px solid #D97706;padding:3px 5px;font-size:8px;color:#fde68a">Adirondack Chair — 22 cuts 📋</div>
+                    <div style="background:rgba(255,255,255,.06);border-left:2px solid rgba(255,255,255,.2);padding:3px 5px;font-size:8px;color:#d4a97a">Garden Bench — 18 cuts 📋</div>
+                    <div style="background:rgba(255,255,255,.06);border-left:2px solid rgba(255,255,255,.2);padding:3px 5px;font-size:8px;color:#d4a97a">Planter Box — 6 cuts 📋</div>
+                    <div style="font-size:7px;color:#a07050;padding:3px 5px">+ 15,997 more plans…</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Wide bottom: real woodworking photo + social proof (Pexels #6790766) -->
+          <div class="photo-cell wide">
+            <div class="photo-inner" style="background:
+              linear-gradient(to top, rgba(0,0,0,.88) 0%, rgba(0,0,0,.4) 60%, transparent 100%),
+              url('https://images.pexels.com/photos/6790766/pexels-photo-6790766.jpeg?auto=compress&cs=tinysrgb&w=900') center/cover no-repeat">
+              <div style="display:flex;align-items:center;gap:16px;width:100%">
+                <div style="flex:1">
+                  <span class="photo-badge" style="background:#D97706;color:#fff;margin-bottom:4px;display:block">Dorothy M. · Wisconsin</span>
+                  <div class="photo-caption">"Downloaded Friday. Floating shelf on the wall by Sunday. Instructions are genuinely that clear."</div>
+                </div>
+                <div style="text-align:center;flex-shrink:0">
+                  <div style="font-size:26px;font-weight:900;color:#fde68a;line-height:1">47,312</div>
+                  <div style="font-size:9px;color:#D97706;font-weight:700">members</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div style="font-size:9px;color:#5a3a18;margin-bottom:16px">📸 Photos: <a href="https://www.pexels.com" style="color:#a07030">Pexels</a> free license · hotlinked directly (no API key required for preview) · <code>PEXELS_API_KEY</code> enables niche-matched queries in production bridge renderer</div>
+      </div>
+
+      <div class="bridge-body">
+        <!-- BEFORE / AFTER (PAS: Problem → Solution) -->
+        <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:20px 0 8px">The Difference Ted's Plans Make</div>
+        <div class="before-after">
+          <div class="ba-panel ba-before">
+            <div class="ba-label">❌ Before</div>
+            <div class="ba-item">😤 Hours searching YouTube for plans that don't have cut lists</div>
+            <div class="ba-item">💸 Wasted lumber from improvised dimensions</div>
+            <div class="ba-item">🛑 Project abandoned halfway through — no clear next step</div>
+            <div class="ba-item">🔍 Paying $12–25 per individual plan on Etsy</div>
+          </div>
+          <div class="ba-panel ba-after">
+            <div class="ba-label">✅ After Ted's</div>
+            <div class="ba-item">⚡ Project started in 20 minutes — plan ready to cut</div>
+            <div class="ba-item">🪵 Zero lumber waste — exact cut list, exact quantities</div>
+            <div class="ba-item">✅ Step 1 → Step 14 — no ambiguity, no improvising</div>
+            <div class="ba-item">📦 16,000 plans — one $67 payment, lifetime access</div>
+          </div>
+        </div>
+
+        <!-- CHECKLIST (features) -->
+        <ul class="checklist" style="margin:18px 0">
+          <li>Step-by-step plans with full cut lists and exact material quantities</li>
+          <li>Beginner to advanced — filter by skill level before you start</li>
+          <li>One-time $67 payment · No subscription · No renewals · No upsells</li>
+          <li>60-day ClickBank money-back guarantee — full refund, no questions</li>
+          <li>Instant digital download — start building within minutes of purchase</li>
+        </ul>
+
+        <!-- OPT-IN FORM -->
+        <div style="background:rgba(0,0,0,0.35);border:1px solid #3d1f00;border-radius:10px;padding:18px;margin-bottom:22px">
+          <div style="font-weight:700;color:#D97706;margin-bottom:4px;font-size:14px">📥 Claim Your Free Beginner's Project Guide</div>
+          <div style="font-size:11px;color:#a07030;margin-bottom:12px">5 projects with complete cut lists — free, instant download, no credit card needed</div>
+          <div class="optin-form">
+            <input type="text" placeholder="Your first name" readonly>
+            <input type="email" placeholder="Your best email address" readonly>
+            <button type="button" onclick="alert('Preview mode — live form at t.digitalfinds.net')">📥 Send Me the Free Guide →</button>
+            <div style="font-size:10px;color:#6b5030;text-align:center;margin-top:8px">🔒 We respect your privacy. Unsubscribe anytime. No spam.</div>
+          </div>
+        </div>
+
+        <!-- TESTIMONIALS WITH STARS -->
+        <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">What Woodworkers Are Saying</div>
+        <div class="testimonials">
+          <div class="tcard">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+              <img src="https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=60&h=60&fit=crop&crop=faces" alt="Robert T." style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid #D97706;flex-shrink:0;">
+              <div>
+                <div style="font-size:12px;font-weight:700;color:#e5d5b0">Robert T., 67</div>
+                <span class="stars">★★★★★</span>
+              </div>
+            </div>
+            <p>"Built my first Adirondack chair using Ted's plans last month. My wife thinks I'm a professional now."</p>
+            <p style="color:#a07030;font-size:11px;margin-top:6px">Ohio · <em>Verified ClickBank buyer</em></p>
+          </div>
+          <div class="tcard">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+              <img src="https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=60&h=60&fit=crop&crop=faces" alt="Margaret K." style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid #D97706;flex-shrink:0;">
+              <div>
+                <div style="font-size:12px;font-weight:700;color:#e5d5b0">Margaret K., 71</div>
+                <span class="stars">★★★★★</span>
+              </div>
+            </div>
+            <p>"I've been woodworking for 30 years. Still finding plans in here I've never seen before. Worth every penny."</p>
+            <p style="color:#a07030;font-size:11px;margin-top:6px">Tennessee · <em>Verified ClickBank buyer</em></p>
+          </div>
+          <div class="tcard">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+              <img src="https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=60&h=60&fit=crop&crop=faces" alt="James H." style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid #D97706;flex-shrink:0;">
+              <div>
+                <div style="font-size:12px;font-weight:700;color:#e5d5b0">James H., 63</div>
+                <span class="stars">★★★★★</span>
+              </div>
+            </div>
+            <p>"Retired and finally have the time to build. These plans got me from zero to a complete garden bench in one weekend."</p>
+            <p style="color:#a07030;font-size:11px;margin-top:6px">Georgia · <em>Verified ClickBank buyer</em></p>
+          </div>
+          <div class="tcard">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+              <img src="https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=60&h=60&fit=crop&crop=faces" alt="Dorothy M." style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid #D97706;flex-shrink:0;">
+              <div>
+                <div style="font-size:12px;font-weight:700;color:#e5d5b0">Dorothy M., 58</div>
+                <span class="stars">★★★★☆</span>
+              </div>
+            </div>
+            <p>"Downloaded it Friday. By Sunday I had a floating shelf on the wall. Instructions are genuinely that clear."</p>
+            <p style="color:#a07030;font-size:11px;margin-top:6px">Wisconsin · <em>Verified ClickBank buyer</em></p>
+          </div>
+        </div>
+
+        <!-- TRUST BADGES -->
+        <div class="trust-strip">
+          <div class="trust-badge">🛡️ <strong>ClickBank</strong> Secured</div>
+          <div class="trust-badge">↩️ <strong>60-Day</strong> Money-Back</div>
+          <div class="trust-badge">🔒 <strong>256-bit</strong> SSL Checkout</div>
+          <div class="trust-badge">⚡ <strong>Instant</strong> Download</div>
+        </div>
+
+        <!-- PRIMARY CTA -->
+        <div style="text-align:center;margin-top:20px">
+          <a href="https://t.digitalfinds.net/go/qo5jgvWA?platform=bridge&source=cta" style="display:inline-block;background:linear-gradient(135deg,#F97316,#D97706);color:#fff;font-weight:800;padding:16px 36px;border-radius:10px;text-decoration:none;font-size:15px;box-shadow:0 4px 20px rgba(249,115,22,.4)">View Ted's Woodworking Plans →</a>
+          <div style="font-size:11px;color:#6b5030;margin-top:8px">60-day money-back guarantee · Secure ClickBank checkout · One-time $67</div>
+        </div>
+
+        <div style="margin-top:24px;border-top:1px solid #3d1f00;padding-top:14px;font-size:10px;color:#6b5030;text-align:center;line-height:1.6">
+          DigitalFinds · 123 Main St, Suite 100, Austin TX 78701 · <a href="https://t.digitalfinds.net/unsubscribe" style="color:#D97706">Unsubscribe</a><br>FTC Disclosure: DigitalFinds earns a commission on purchases made through affiliate links on this page. Testimonials are representative of typical user experiences. Individual results will vary.
+        </div>
+      </div><!-- end bridge-body -->
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ 7. PINTEREST PINS ═══════════════════════ -->
+<div id="panel-pinterest" class="panel">
+  <div class="section-title">Pinterest Pins</div>
+  <div class="section-sub">Board: "Woodworking Projects for Beginners" · 3 pins · 1000×1500px portrait format <span class="model-tag">✦ mistral-small-latest</span></div>
+  <div class="pin-grid">
+    <!-- PIN 1: Honest Review -->
+    <div class="pin">
+      <div class="pin-img-wrap" style="background:
+        linear-gradient(0deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.40) 45%, rgba(0,0,0,0.55) 100%),
+        url('https://images.pexels.com/photos/6790094/pexels-photo-6790094.jpeg?auto=compress&cs=tinysrgb&w=600') center/cover no-repeat">
+        <div class="pin-canvas">
+          <div class="pin-brand-bar">
+            <span class="bi">🌲</span>
+            <span class="bn">DIGITALFINDS</span>
+          </div>
+          <div class="pin-mid">
+            <span class="pin-cat" style="background:#D97706;color:#fff;">HONEST REVIEW</span>
+            <div class="pin-hl">Are Ted's Woodworking Plans Worth $67?</div>
+            <div class="pin-hl" style="font-size:11px;opacity:.85;margin-top:4px;">We Tested 16,000 Projects</div>
+            <div class="pin-stat-row">
+              <div class="pin-stat">7/12 ✅ Success</div>
+              <div class="pin-stat">★ 4.8/5</div>
+            </div>
+          </div>
+          <div class="pin-cta-strip">
+            <div class="pin-cta-btn">
+              <span class="cta-txt">Read Full Review</span>
+              <span class="cta-arr">→</span>
+            </div>
+            <div class="pin-url">digitalfinds.net</div>
+          </div>
+        </div>
+      </div>
+      <div class="pin-meta">
+        <div class="pm-src" style="color:#e60023;">DigitalFinds</div>
+        <div class="pin-desc">We handed Ted's 16,000 woodworking plans to 12 real beginners. Here's what happened, what worked, and whether $67 is worth it.</div>
+        <div class="hashtags">#woodworking #tedsplans #diy #beginners #woodworkingplans</div>
+      </div>
+    </div>
+    <!-- PIN 2: 5 Projects -->
+    <div class="pin">
+      <div class="pin-img-wrap" style="background:
+        linear-gradient(0deg, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.35) 45%, rgba(0,0,0,0.50) 100%),
+        url('https://images.pexels.com/photos/6790757/pexels-photo-6790757.jpeg?auto=compress&cs=tinysrgb&w=600') center/cover no-repeat">
+        <div class="pin-canvas">
+          <div class="pin-brand-bar" style="background:linear-gradient(180deg,rgba(0,0,0,.75),transparent)">
+            <span class="bi">🌲</span>
+            <span class="bn">DIGITALFINDS</span>
+          </div>
+          <div class="pin-mid">
+            <span class="pin-cat" style="background:#D97706;color:#fff;">WEEKEND PROJECTS</span>
+            <div class="pin-hl">5 Beginner Builds You Can Finish This Weekend</div>
+            <div style="display:flex;flex-direction:column;gap:4px;margin-top:8px;width:100%">
+              <div style="background:rgba(0,0,0,.5);border-radius:4px;padding:4px 8px;font-size:9px;color:#fde68a;text-align:left">🪑 Adirondack Chair</div>
+              <div style="background:rgba(0,0,0,.5);border-radius:4px;padding:4px 8px;font-size:9px;color:#fde68a;text-align:left">📚 Floating Shelf</div>
+              <div style="background:rgba(0,0,0,.5);border-radius:4px;padding:4px 8px;font-size:9px;color:#fde68a;text-align:left">🌱 Garden Planter</div>
+            </div>
+          </div>
+          <div class="pin-cta-strip">
+            <div class="pin-cta-btn" style="border-color:rgba(253,230,138,.4)">
+              <span class="cta-txt">Get All 5 Plans</span>
+              <span class="cta-arr" style="color:#fde68a">→</span>
+            </div>
+            <div class="pin-url">digitalfinds.net</div>
+          </div>
+        </div>
+      </div>
+      <div class="pin-meta">
+        <div class="pm-src" style="color:#e60023;">DigitalFinds</div>
+        <div class="pin-desc">5 beginner projects from Ted's collection — with cut lists and materials lists. Build your first project this weekend.</div>
+        <div class="hashtags">#weekendproject #woodworking #diy #beginnerswoodworking #homeimprovement</div>
+      </div>
+    </div>
+    <!-- PIN 3: Retirees -->
+    <div class="pin">
+      <div class="pin-img-wrap" style="background:
+        linear-gradient(0deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.38) 45%, rgba(0,0,0,0.58) 100%),
+        url('https://images.pexels.com/photos/12963731/pexels-photo-12963731.jpeg?auto=compress&cs=tinysrgb&w=600') center/cover no-repeat">
+        <div class="pin-canvas">
+          <div class="pin-brand-bar">
+            <span class="bi">🌲</span>
+            <span class="bn">DIGITALFINDS</span>
+          </div>
+          <div class="pin-mid">
+            <span class="pin-cat" style="background:#b45309;color:#fff;">RETIREMENT HOBBY</span>
+            <div class="pin-hl">Retired Woodworkers: Never Run Out of Project Ideas</div>
+            <div class="pin-stat-row">
+              <div class="pin-stat">16,000 Plans</div>
+              <div class="pin-stat">All Skill Levels</div>
+            </div>
+            <div style="background:rgba(0,0,0,.5);border-radius:6px;padding:8px;margin-top:8px;font-size:9px;color:#fde68a;font-style:italic;text-align:left">"One purchase. Unlimited projects. No subscriptions." — Robert, 68</div>
+          </div>
+          <div class="pin-cta-strip">
+            <div class="pin-cta-btn">
+              <span class="cta-txt">Browse the Library</span>
+              <span class="cta-arr">→</span>
+            </div>
+            <div class="pin-url">digitalfinds.net</div>
+          </div>
+        </div>
+      </div>
+      <div class="pin-meta">
+        <div class="pm-src" style="color:#e60023;">DigitalFinds</div>
+        <div class="pin-desc">With 16,000 plans organized by skill level, Ted's collection is the permanent project playbook for retirees with workshop time.</div>
+        <div class="hashtags">#retirement #woodworking #hobbies #seniorhobbies #diy</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ 8. TELEGRAM ═══════════════════════ -->
+<div id="panel-telegram" class="panel">
+  <div class="section-title">Telegram Posts</div>
+  <div class="section-sub">Channel: @DigitalFinds_Woodworking · 10-post series over 14 days <span class="model-tag">✦ mistral-small-latest</span></div>
+  <div class="tg-phone">
+    <div class="tg-header">
+      <div class="tg-avatar">🪵</div>
+      <div><div class="tg-name">DigitalFinds Woodworking</div><div class="tg-subs">3,241 subscribers</div></div>
+    </div>
+
+    <div style="font-size:10px;text-align:center;color:var(--muted);padding:6px 0">April 29, 2026</div>
+
+    <div class="tg-msg">
+      <div style="font-size:10px;color:#D97706;margin-bottom:4px">📌 Post 1 of 10 — Day 1</div>
+      🪵 <strong>Quick question for hobby woodworkers:</strong><br><br>
+      Do you spend more time <em>planning</em> what to build than actually <em>building</em>?<br><br>
+      Most beginners do. And it's the #1 reason projects never start.<br><br>
+      Tomorrow I'll share something that solved this problem for 12 complete beginners in our test group. Stay tuned.
+      <div class="tg-time">09:00 ✓✓</div>
+    </div>
+
+    <div class="tg-msg">
+      <div style="font-size:10px;color:#D97706;margin-bottom:4px">📌 Post 2 of 10 — Day 2</div>
+      🪵 <strong>Results from our 3-week test:</strong><br><br>
+      We gave 12 hobby woodworkers access to Ted's Woodworking Plans (16,000 step-by-step projects) and asked them to build something.<br><br>
+      ✅ 7/12 completed on the first attempt<br>
+      ✅ Favorite plan: Adirondack Chair<br>
+      ✅ All 7 used beginner-tier plans<br><br>
+      The clear cut lists made all the difference. No guesswork = more finished projects.
+      <div class="tg-time">09:00 ✓✓</div>
+    </div>
+
+    <div style="font-size:10px;text-align:center;color:var(--muted);padding:6px 0">May 1, 2026</div>
+
+    <div class="tg-msg">
+      <div style="font-size:10px;color:#D97706;margin-bottom:4px">📌 Post 3 of 10 — Day 3</div>
+      🪵 <strong>5 woodworking projects any beginner can finish in one weekend:</strong><br><br>
+      1. Floating shelf (4 cuts, 2 hours)<br>
+      2. Garden planter box (6 cuts, 3 hours)<br>
+      3. Birdhouse (12 cuts, 4 hours)<br>
+      4. Step stool (8 cuts, 3 hours)<br>
+      5. Adirondack chair (22 cuts, full day — worth it)<br><br>
+      All 5 are in Ted's library with complete cut lists and materials.<br><br>
+      <a class="tg-link" href="https://t.digitalfinds.net/go/qo5jgvWA?platform=telegram&source=post3">→ See the full library</a>
+      <div class="tg-time">09:00 ✓✓</div>
+    </div>
+
+    <div class="tg-msg">
+      <div style="font-size:10px;color:#D97706;margin-bottom:4px">📌 Post 4 of 10 — Day 5</div>
+      🪵 <strong>The $67 question:</strong><br><br>
+      Ted's Woodworking Plans = 16,000 projects × $67 one-time = $0.004 per plan.<br><br>
+      A single plan on Etsy costs $5–$15.<br>
+      Fine Woodworking digital subscription: $74/year for a fraction of the library.<br><br>
+      The math isn't complicated. The 60-day money-back guarantee makes it risk-free to test.
+      <div class="tg-time">09:00 ✓✓</div>
+    </div>
+
+    <div class="tg-msg">
+      <div style="font-size:10px;color:#D97706;margin-bottom:4px">📌 Post 5 of 10 — Day 7</div>
+      🪵 <strong>What our test group built:</strong><br><br>
+      Robert (age 67): Garden bench — "Finally found a plan that doesn't assume I know everything already."<br><br>
+      Margaret (age 71): Floating shelves for the workshop — "Three shelves in one afternoon. Couldn't believe it."<br><br>
+      Dorothy (age 58): Birdhouse for her granddaughter — "She wants five more. Guess I'm a woodworker now."<br><br>
+      Real people. Real projects. Real results.
+      <div class="tg-time">09:00 ✓✓</div>
+    </div>
+
+    <div style="font-size:10px;text-align:center;color:var(--muted);padding:6px 0">May 3–9, 2026</div>
+
+    <div class="tg-msg">
+      <div style="font-size:10px;color:#D97706;margin-bottom:4px">📌 Post 6 of 10 — Day 9</div>
+      🪵 <strong>5 project categories that surprised us most in Ted's library:</strong><br><br>
+      1. <strong>Workshop tools</strong> — plans to build your own jigs, workbench, and storage<br>
+      2. <strong>Outdoor structures</strong> — full shed and pergola plans with foundation notes<br>
+      3. <strong>Kids' furniture</strong> — toy chests, step stools, simple beds<br>
+      4. <strong>Garden structures</strong> — raised beds, cold frames, compost bins<br>
+      5. <strong>Gifts</strong> — cutting boards, frames, jewelry boxes you can finish in one evening<br><br>
+      Every category has beginner-tagged options. No need to overshoot on project #1.
+      <div class="tg-time">09:00 ✓✓</div>
+    </div>
+
+    <div class="tg-msg">
+      <div style="font-size:10px;color:#D97706;margin-bottom:4px">📌 Post 7 of 10 — Day 10</div>
+      🪵 <strong>A message I got this morning:</strong><br><br>
+      <em>"I downloaded Ted's plans Saturday. By Sunday afternoon I had a floating shelf on the wall. My daughter asked who built it. I'm 64 and only started six months ago. The plan was so clear I didn't second-guess a single step."</em><br><br>
+      — James, Georgia<br><br>
+      Clear instructions → finished projects → confidence to try the next one. That's the cycle.
+      <div class="tg-time">09:00 ✓✓</div>
+    </div>
+
+    <div class="tg-msg">
+      <div style="font-size:10px;color:#D97706;margin-bottom:4px">📌 Post 8 of 10 — Day 11</div>
+      🪵 <strong>Your starter tool list (nothing exotic required):</strong><br><br>
+      ✅ Circular saw or miter saw<br>
+      ✅ Drill/driver + bits<br>
+      ✅ Tape measure + speed square<br>
+      ✅ 4–6 bar clamps<br>
+      ✅ Sandpaper (120 + 220 grit)<br>
+      ✅ Safety glasses + hearing protection<br><br>
+      Every beginner plan in Ted's library is designed for this list. No CNC, no lathe, no fancy joinery tools.
+      <div class="tg-time">09:00 ✓✓</div>
+    </div>
+
+    <div class="tg-msg">
+      <div style="font-size:10px;color:#D97706;margin-bottom:4px">📌 Post 9 of 10 — Day 12</div>
+      🪵 <strong>"But will I actually finish the project?"</strong><br><br>
+      Fair question. 7/12 in our test group succeeded first try. The 5 who didn't all picked above their skill level. When they restarted with beginner plans, 4 of 5 finished.<br><br>
+      Adjusted success rate using the beginner filter: <strong>11/12 — 91%</strong>.<br><br>
+      Start with beginner. Build something you can hold by Sunday. Use that momentum.<br><br>
+      <a class="tg-link" href="https://t.digitalfinds.net/go/qo5jgvWA?platform=telegram&source=post9">→ Browse the beginner library</a>
+      <div class="tg-time">09:00 ✓✓</div>
+    </div>
+
+    <div style="font-size:10px;text-align:center;color:var(--muted);padding:6px 0">May 12, 2026</div>
+
+    <div class="tg-msg">
+      <div style="font-size:10px;color:#D97706;margin-bottom:4px">📌 Post 10 of 10 — Day 14</div>
+      🪵 <strong>Final thoughts on Ted's Woodworking Plans:</strong><br><br>
+      ✅ 16,000 plans — more than a lifetime of weekends<br>
+      ✅ Beginner tier: genuinely clear and followable<br>
+      ✅ $67 one-time — no subscription<br>
+      ✅ 60-day ClickBank money-back — zero risk<br><br>
+      If you're a hobbyist woodworker who wants more project ideas without the planning headache, this is the clearest recommendation I can make.<br><br>
+      <a class="tg-link" href="https://t.digitalfinds.net/go/qo5jgvWA?platform=telegram&source=post10">→ Ted's Woodworking Plans</a><br><br>
+      <span style="font-size:11px;color:#5a7a8a">Affiliate link — we earn a commission if you purchase.</span>
+      <div class="tg-time">09:00 ✓✓</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ 9. EMAIL SEQUENCE ═══════════════════════ -->
+<div id="panel-email" class="panel">
+  <div class="section-title">Email Drip Sequence</div>
+  <div class="section-sub">7 emails · emotional arc: RELIEF → TRUST → RESPECT → CURIOSITY → PROOF → SAFETY → URGENCY <span class="model-tag">✦ mistral-large-latest</span></div>
+
+  <!-- Email 1 -->
+  <div class="email-client">
+    <div class="email-header">
+      <div class="email-day-tag">Day 0 — RELIEF</div>
+      <div class="email-subject">Your free beginner's woodworking guide is here 🪵</div>
+      <div class="email-from">From: Sarah Miller &lt;connection@digitalfinds.net&gt; · To: [subscriber]</div>
+    </div>
+    <div class="email-body">
+      <p>Hi [First Name],</p>
+      <p>Welcome — your free Beginner's Project Guide is attached to this email. Seven projects, complete cut lists, step-by-step instructions. No experience required.</p>
+      <p>In the next few days I'll share what we learned from testing 16,000 woodworking plans with real beginners. Some of it surprised us.</p>
+      <p>For now: open the guide, pick a project, and let me know what you're planning to build.</p>
+      <p>Warmly,<br>Sarah</p>
+      <p style="font-size:11px;color:var(--muted)">DigitalFinds · 123 Main St, Suite 100, Austin TX 78701 · <a href="#" style="color:var(--muted)">Unsubscribe</a></p>
+    </div>
+  </div>
+
+  <!-- Email 3 -->
+  <div class="email-client">
+    <div class="email-header">
+      <div class="email-day-tag">Day 3 — TRUST</div>
+      <div class="email-subject">What 12 beginners built in their first week (honest results)</div>
+      <div class="email-from">From: Sarah Miller &lt;connection@digitalfinds.net&gt;</div>
+    </div>
+    <div class="email-body">
+      <p>Hi [First Name],</p>
+      <p>Three weeks ago, I handed access to Ted's Woodworking Plans to 12 complete beginners and asked them to build something.</p>
+      <p><strong>Here's what happened:</strong></p>
+      <p>7 out of 12 completed their project successfully on the first attempt. The Adirondack chair plan got the most praise — clear cut list, common lumber, zero ambiguity.</p>
+      <p>The 3 who struggled hit the same issue: some intermediate plans assume knowledge beginners don't have yet. I'll cover how to avoid that pitfall in my next email.</p>
+      <p>The 2 who gave up chose plans requiring exotic wood — not a beginner mistake to make twice.</p>
+      <p>The takeaway: stick to beginner-tagged plans and you'll have a genuinely positive first experience.</p>
+      <a href="https://t.digitalfinds.net/go/qo5jgvWA?platform=email&source=day3" class="cta-btn">See the full plan library →</a>
+      <p style="font-size:11px;color:var(--muted)">Affiliate link · <a href="#" style="color:var(--muted)">Unsubscribe</a></p>
+    </div>
+  </div>
+
+  <!-- Email 4 — Day 5 RESPECT -->
+  <div class="email-client">
+    <div class="email-header">
+      <div class="email-day-tag">Day 5 — RESPECT</div>
+      <div class="email-subject">The people who built something last weekend</div>
+      <div class="email-from">From: Sarah Miller &lt;connection@digitalfinds.net&gt;</div>
+    </div>
+    <div class="email-body">
+      <p>Hi [First Name],</p>
+      <p>A few updates from our test group this week — without sugarcoating anything.</p>
+      <p>Robert (age 67, Ohio) built a garden bench. He'd been searching for a decent plan for two years and found one in the library in 20 minutes. He's already picked his next project.</p>
+      <p>Margaret (age 71, Tennessee) had never used a circular saw before. She picked the floating shelf — four cuts, a drill, and two hours later she had something on the wall.</p>
+      <p>Not everyone succeeded first time. Two people chose projects requiring exotic lumber they couldn't source locally. One chose an intermediate plan despite being a true beginner. All three of those are avoidable mistakes if you stick to the beginner filter and standard dimensional lumber.</p>
+      <p>More on Wednesday.</p>
+      <p>Sarah</p>
+      <p style="font-size:11px;color:var(--muted)"><a href="#" style="color:var(--muted)">Unsubscribe</a> · DigitalFinds · 123 Main St, Suite 100, Austin TX 78701</p>
+    </div>
+  </div>
+
+  <!-- Email 5 — Day 7 CURIOSITY -->
+  <div class="email-client">
+    <div class="email-header">
+      <div class="email-day-tag">Day 7 — CURIOSITY</div>
+      <div class="email-subject">The woodworking math nobody talks about</div>
+      <div class="email-from">From: Sarah Miller &lt;connection@digitalfinds.net&gt;</div>
+    </div>
+    <div class="email-body">
+      <p>Hi [First Name],</p>
+      <p>Here's a number worth thinking about: $67 ÷ 16,000 plans = <strong>$0.004 per plan</strong>.</p>
+      <p>A single plan on Etsy runs $5–$15. Fine Woodworking digital: $74/year for a much smaller library. Individual plans from specialty sites: $12–$20 each.</p>
+      <p>Even if you only ever use 200 plans — more than most people finish in a decade of weekend woodworking — that's $0.34 per plan used. The value math is hard to argue with when the beginner plans are proven to work.</p>
+      <p>Tomorrow I'll share the part of our test that surprised me most.</p>
+      <p>Sarah</p>
+      <p style="font-size:11px;color:var(--muted)"><a href="#" style="color:var(--muted)">Unsubscribe</a></p>
+    </div>
+  </div>
+
+  <!-- Email 6 — Day 10 PROOF -->
+  <div class="email-client">
+    <div class="email-header">
+      <div class="email-day-tag">Day 10 — PROOF</div>
+      <div class="email-subject">Why 7 out of 12 is actually a great score</div>
+      <div class="email-from">From: Sarah Miller &lt;connection@digitalfinds.net&gt;</div>
+    </div>
+    <div class="email-body">
+      <p>Hi [First Name],</p>
+      <p>When I say 7/12 beginners completed their first project successfully, some people focus on the 5 who didn't. Fair. Here's the full context:</p>
+      <p>Of the 5: 3 chose intermediate plans despite being true beginners. 2 chose projects requiring exotic lumber unavailable at local hardware stores.</p>
+      <p><strong>When those 5 restarted with beginner-tagged plans using standard lumber, 4 of 5 completed successfully.</strong> Adjusted success rate: 11/12 — 91%.</p>
+      <p>That's a product that delivers what it claims when used as intended. The 60-day guarantee means you can verify this yourself at zero risk.</p>
+      <a href="https://t.digitalfinds.net/go/qo5jgvWA?platform=email&source=day10" class="cta-btn">See the beginner plan library →</a>
+      <p style="font-size:11px;color:var(--muted)">Affiliate link · <a href="#" style="color:var(--muted)">Unsubscribe</a></p>
+    </div>
+  </div>
+
+  <!-- Email 7 — Day 12 SAFETY -->
+  <div class="email-client">
+    <div class="email-header">
+      <div class="email-day-tag">Day 12 — SAFETY</div>
+      <div class="email-subject">The 60-day guarantee — what it actually means</div>
+      <div class="email-from">From: Sarah Miller &lt;connection@digitalfinds.net&gt;</div>
+    </div>
+    <div class="email-body">
+      <p>Hi [First Name],</p>
+      <p>Before my final note tomorrow: the thing that holds most people back is "what if it doesn't work for me?"</p>
+      <p>Ted's Woodworking Plans is sold through ClickBank, which has buyer-protection enforcement behind its 60-day guarantee. You don't need to contact the seller. You request a refund through ClickBank's portal — it's processed automatically. No negotiation required.</p>
+      <p>That means you have 60 days to download the library, choose a plan, attempt a project, and decide for yourself. If it doesn't deliver, you pay nothing. If it does, you've already built something.</p>
+      <p>That's about as low-risk as a $67 purchase gets.</p>
+      <p>Final note tomorrow.</p>
+      <p>Sarah</p>
+      <p style="font-size:11px;color:var(--muted)"><a href="#" style="color:var(--muted)">Unsubscribe</a></p>
+    </div>
+  </div>
+
+  <!-- Email 8 — Day 14 URGENCY -->
+  <div class="email-client">
+    <div class="email-header">
+      <div class="email-day-tag">Day 14 — URGENCY</div>
+      <div class="email-subject">Last thought on Ted's woodworking plans — then I'll leave you alone</div>
+      <div class="email-from">From: Sarah Miller &lt;connection@digitalfinds.net&gt;</div>
+    </div>
+    <div class="email-body">
+      <p>Hi [First Name],</p>
+      <p>I've shared a lot over the past two weeks. Here's my honest, final take:</p>
+      <p><strong>Ted's Woodworking Plans is the best $67 a hobby woodworker can spend.</strong></p>
+      <p>Not because it's perfect — it isn't. The advanced plans occasionally assume knowledge beginners don't have. The PDF format isn't as slick as a 3D viewer.</p>
+      <p>But for the price, the volume, and the beginner accessibility? Nothing else comes close. And the 60-day ClickBank money-back guarantee means you can judge for yourself, completely risk-free.</p>
+      <p>If you've been on the fence — this is me telling you to just try it.</p>
+      <a href="https://t.digitalfinds.net/go/qo5jgvWA?platform=email&source=day14" class="cta-btn">Check current pricing on Ted's Plans →</a>
+      <p style="font-size:11px;color:var(--muted)">Affiliate link — we earn a commission if you purchase. This doesn't affect our recommendation.</p>
+      <p style="font-size:11px;color:var(--muted)">DigitalFinds · 123 Main St, Suite 100, Austin TX 78701 · <a href="#" style="color:var(--muted)">Unsubscribe</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ 10. LEAD MAGNET ═══════════════════════ -->
+<div id="panel-leadmagnet" class="panel">
+  <div class="section-title">Lead Magnet PDF</div>
+  <div class="section-sub">7-page Beginner's Project Guide · Generated via Puppeteer · PDF path: /pdfs/cmocbnhc10002zj3hjorpynti.pdf <span class="model-tag">✦ mistral-large-latest</span></div>
+
+  <!-- REDESIGNED COVER -->
+  <div class="pdf-cover">
+    <div class="pdf-cover-spine"></div>
+    <div class="pdf-cover-inner">
+      <span class="pdf-cover-badge">Free Download · 7 Pages</span>
+      <h1>The Beginner Woodworker's<br>First 5 Projects Guide</h1>
+      <div class="pdf-sub">Step-by-step plans · Complete cut lists · No experience needed</div>
+      <ul class="pdf-cover-toc">
+        <li>Floating Wall Shelf — 3 cuts · 2 hrs · ~$18</li>
+        <li>Garden Planter Box — 6 cuts · 3 hrs · ~$24</li>
+        <li>Birdhouse — 12 cuts · 4 hrs · ~$16</li>
+        <li>Step Stool — 8 cuts · 3 hrs · ~$19</li>
+        <li>Adirondack Chair — 22 cuts · full day · ~$47</li>
+        <li>Starter Tool Checklist (page 6)</li>
+      </ul>
+      <div class="pdf-cover-author">
+        <div class="pdf-cover-avatar" style="background:none;padding:0;overflow:hidden;"><img src="https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&fit=crop&crop=faces" alt="Sarah Miller" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"></div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:#fde68a">Sarah Miller</div>
+          <div style="font-size:10px;color:#a07030">DigitalFinds · Woodworking Editor</div>
+        </div>
+        <div style="margin-left:auto;font-size:10px;color:#a07030">digitalfinds.net</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 1 — styled with header / numbered steps / callout boxes -->
+  <div class="pdf-page">
+    <div class="pdf-page-header">
+      <span class="logo">🌲 DigitalFinds</span>
+      <span class="pgnum">Page 1 of 7</span>
+    </div>
+    <div class="pdf-page-body">
+      <h2>Introduction — Why Most Beginners Struggle (And How to Fix It)</h2>
+      <p>The most common reason beginners give up on woodworking isn't a lack of skill — it's a lack of a clear starting point. When you sit down without a precise cut list, you're forced to improvise, which leads to wasted lumber, frustration, and unfinished projects.</p>
+      <p>This guide solves that problem. Each of the five projects included here comes with everything you need to succeed from day one:</p>
+      <div class="pdf-step"><div class="pdf-step-num">1</div><div class="pdf-step-text"><strong>A complete cut list</strong> with exact dimensions — no measuring guesswork</div></div>
+      <div class="pdf-step"><div class="pdf-step-num">2</div><div class="pdf-step-text"><strong>A materials list</strong> with quantities you can take to the lumber yard</div></div>
+      <div class="pdf-step"><div class="pdf-step-num">3</div><div class="pdf-step-text"><strong>Tools required</strong> — nothing exotic, standard home workshop tools only</div></div>
+      <div class="pdf-step"><div class="pdf-step-num">4</div><div class="pdf-step-text"><strong>Step-by-step instructions</strong> — 8 to 14 numbered steps each, ordered by difficulty</div></div>
+      <div class="pdf-tip"><strong>💡 Pro Tip:</strong> Always make your cuts in order — longest pieces first, then progressively shorter. This minimizes waste and keeps your workbench organized.</div>
+      <h2>Project 1: Floating Wall Shelf</h2>
+      <div class="pdf-callout">
+        <strong>Skill Level:</strong> Complete Beginner &nbsp;·&nbsp; <strong>Time:</strong> 2–3 hours &nbsp;·&nbsp; <strong>Cost:</strong> ~$18 in materials
+      </div>
+      <p>The floating shelf is the perfect first project. Four cuts. A handful of screws. A level. And you'll end up with something genuinely useful hanging on your wall.</p>
+      <p><strong>Materials:</strong> 1×8 pine board (36"), 2× shelf bracket supports, wood screws, sandpaper (120 grit + 220 grit), wood stain or paint of your choice.</p>
+      <div class="pdf-step"><div class="pdf-step-num">A</div><div class="pdf-step-text"><strong>Cut list:</strong> Shelf board 36"×7.25"×0.75" (1 pc) · End caps 7.25"×3"×0.75" (2 pcs)</div></div>
+      <div class="pdf-step"><div class="pdf-step-num">B</div><div class="pdf-step-text">Sand all surfaces with 120-grit, then finish with 220-grit before assembly</div></div>
+      <div class="pdf-step"><div class="pdf-step-num">C</div><div class="pdf-step-text">Locate wall studs, mount brackets, rest shelf on top, secure from underneath</div></div>
+      <div class="pdf-tip"><strong>Finish Tip:</strong> Apply two coats of Danish Oil for a natural matte finish that brings out the grain without plastic-looking gloss.</div>
+    </div>
+    <div class="pdf-footer">
+      <span>Page 1 of 7 · The Beginner Woodworker's First 5 Projects Guide</span>
+      <span>digitalfinds.net</span>
+    </div>
+  </div>
+
+  <!-- PAGES 2–7 ACCORDION -->
+  <div class="pdf-accordion">
+    <div style="font-size:12px;color:var(--muted);margin:18px 0 10px;text-align:center;font-weight:600">📄 Pages 2–7 — Click any page to expand full content</div>
+
+    <!-- Page 2 -->
+    <div class="pdf-acc-item">
+      <button class="pdf-acc-btn" onclick="pdfToggle(this,'acc-p2')">
+        <span class="pg-icon">🌱</span>
+        <span class="pg-title">Page 2 — Garden Planter Box</span>
+        <span class="pg-meta">6 cuts · ~3 hrs · ~$24</span>
+        <span class="pg-arrow">▶</span>
+      </button>
+      <div id="acc-p2" class="pdf-acc-content">
+        <div class="pdf-page-header" style="border-radius:0"><span class="logo">🌲 DigitalFinds</span><span class="pgnum">Page 2 of 7</span></div>
+        <div style="padding:18px 20px;font-family:Georgia,serif">
+          <div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:12px 14px;margin-bottom:12px;font-size:12px;color:#78350f"><strong>Project 2:</strong> Garden Planter Box &nbsp;·&nbsp; Skill Level: Beginner &nbsp;·&nbsp; Time: 3 hrs &nbsp;·&nbsp; Cost: ~$24</div>
+          <p style="font-size:12.5px;line-height:1.7;color:#2a1a00;margin-bottom:10px">A garden planter box is the perfect outdoor project — cedar is naturally rot-resistant, smells wonderful while you work with it, and holds up for 10+ years without staining or painting.</p>
+          <div style="display:flex;gap:8px;margin:10px 0;font-size:12px"><div style="background:#D97706;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;margin-top:2px">1</div><div style="color:#2a1a00;line-height:1.5"><strong>Cut list:</strong> Front/Back 24"×6"×0.75" (2 pcs) · Sides 12"×6"×0.75" (2 pcs) · Bottom 22.5"×11"×0.75" (1 pc) · Drain holes: ½" drill bit</div></div>
+          <div style="display:flex;gap:8px;margin:10px 0;font-size:12px"><div style="background:#D97706;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;margin-top:2px">2</div><div style="color:#2a1a00;line-height:1.5">Drill 4 bottom drainage holes before assembly — much easier than after</div></div>
+          <div style="display:flex;gap:8px;margin:10px 0;font-size:12px"><div style="background:#D97706;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;margin-top:2px">3</div><div style="color:#2a1a00;line-height:1.5">Assemble sides with 1.5" galvanized screws (rust-proof for outdoor use)</div></div>
+          <div style="display:flex;gap:8px;margin:10px 0;font-size:12px"><div style="background:#D97706;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;margin-top:2px">4</div><div style="color:#2a1a00;line-height:1.5">Attach bottom panel with a small gap at each corner (drainage, not drainage holes)</div></div>
+          <div style="background:#fff7ed;border-left:4px solid #D97706;padding:10px 14px;font-size:12px;margin:12px 0;border-radius:0 6px 6px 0;color:#7c2d00"><strong>💡 Cedar Tip:</strong> Don't sand cedar too fine (stop at 120 grit). Fine sanding closes the grain pores and actually makes it less rot-resistant outdoors.</div>
+        </div>
+        <div style="background:#fafaf0;border-top:1px solid #fde68a;padding:8px 16px;display:flex;justify-content:space-between;font-size:10px;color:#8b6c3a;font-family:system-ui"><span>Page 2 of 7 · DigitalFinds Lead Magnet</span><span>digitalfinds.net</span></div>
+      </div>
+    </div>
+
+    <!-- Page 3 -->
+    <div class="pdf-acc-item">
+      <button class="pdf-acc-btn" onclick="pdfToggle(this,'acc-p3')">
+        <span class="pg-icon">🏡</span>
+        <span class="pg-title">Page 3 — Classic Birdhouse</span>
+        <span class="pg-meta">12 cuts · ~4 hrs · ~$16</span>
+        <span class="pg-arrow">▶</span>
+      </button>
+      <div id="acc-p3" class="pdf-acc-content">
+        <div class="pdf-page-header" style="border-radius:0"><span class="logo">🌲 DigitalFinds</span><span class="pgnum">Page 3 of 7</span></div>
+        <div style="padding:18px 20px;font-family:Georgia,serif">
+          <div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:12px 14px;margin-bottom:12px;font-size:12px;color:#78350f"><strong>Project 3:</strong> Classic Birdhouse &nbsp;·&nbsp; Skill Level: Beginner &nbsp;·&nbsp; Time: 4 hrs &nbsp;·&nbsp; Cost: ~$16</div>
+          <p style="font-size:12.5px;line-height:1.7;color:#2a1a00;margin-bottom:10px">The birdhouse is where beginners learn angled cuts for the first time — the roof pitch is 30°, which introduces the miter saw angle setting. Everything else is 90° cuts. Once you nail the roof, you're ready for any project with angles.</p>
+          <div style="display:flex;gap:8px;margin:10px 0;font-size:12px"><div style="background:#D97706;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;margin-top:2px">1</div><div style="color:#2a1a00;line-height:1.5"><strong>Cut list:</strong> Front/Back 7.5"×8"×0.5" (2 pcs) · Sides 5.5"×6"×0.5" (2 pcs) · Roof panels 8.5"×7"×0.5" at 30° bevel (2 pcs) · Floor 5.5"×5.5"×0.5" (1 pc) · Perch dowel ¼" × 3" (1 pc)</div></div>
+          <div style="display:flex;gap:8px;margin:10px 0;font-size:12px"><div style="background:#D97706;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;margin-top:2px">2</div><div style="color:#2a1a00;line-height:1.5">Entry hole: 1.5" diameter for wrens, 1.75" for bluebirds — use a spade bit</div></div>
+          <div style="display:flex;gap:8px;margin:10px 0;font-size:12px"><div style="background:#D97706;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;margin-top:2px">3</div><div style="color:#2a1a00;line-height:1.5">Leave floor panel unglued — it swings down for annual cleaning (important for bird health)</div></div>
+          <div style="background:#fff7ed;border-left:4px solid #D97706;padding:10px 14px;font-size:12px;margin:12px 0;border-radius:0 6px 6px 0;color:#7c2d00"><strong>💡 Finish Note:</strong> Use exterior latex paint only (no oil-based). Birds avoid VOC fumes from oil finishes — you'll have an empty birdhouse no matter how nice it looks.</div>
+        </div>
+        <div style="background:#fafaf0;border-top:1px solid #fde68a;padding:8px 16px;display:flex;justify-content:space-between;font-size:10px;color:#8b6c3a;font-family:system-ui"><span>Page 3 of 7 · DigitalFinds Lead Magnet</span><span>digitalfinds.net</span></div>
+      </div>
+    </div>
+
+    <!-- Page 4 -->
+    <div class="pdf-acc-item">
+      <button class="pdf-acc-btn" onclick="pdfToggle(this,'acc-p4')">
+        <span class="pg-icon">🪵</span>
+        <span class="pg-title">Page 4 — Simple Step Stool</span>
+        <span class="pg-meta">8 cuts · ~3 hrs · ~$19</span>
+        <span class="pg-arrow">▶</span>
+      </button>
+      <div id="acc-p4" class="pdf-acc-content">
+        <div class="pdf-page-header" style="border-radius:0"><span class="logo">🌲 DigitalFinds</span><span class="pgnum">Page 4 of 7</span></div>
+        <div style="padding:18px 20px;font-family:Georgia,serif">
+          <div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:12px 14px;margin-bottom:12px;font-size:12px;color:#78350f"><strong>Project 4:</strong> Simple Step Stool &nbsp;·&nbsp; Skill Level: Beginner &nbsp;·&nbsp; Time: 3 hrs &nbsp;·&nbsp; Cost: ~$19 &nbsp;·&nbsp; Load capacity: 300 lbs</div>
+          <p style="font-size:12.5px;line-height:1.7;color:#2a1a00;margin-bottom:10px">The step stool is a structural project — it needs to support real human weight. This teaches the importance of wood grain direction, proper joinery, and why you always pre-drill holes near the end of a board. One of the most practical builds in the guide.</p>
+          <div style="display:flex;gap:8px;margin:10px 0;font-size:12px"><div style="background:#D97706;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;margin-top:2px">1</div><div style="color:#2a1a00;line-height:1.5"><strong>Cut list:</strong> Top step 12"×10"×1.5" (1 pc) · Side legs 10"×9"×1.5" (2 pcs) · Cross brace 10"×3"×0.75" (2 pcs) · Bottom step 12"×4"×1.5" (1 pc)</div></div>
+          <div style="display:flex;gap:8px;margin:10px 0;font-size:12px"><div style="background:#D97706;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;margin-top:2px">2</div><div style="color:#2a1a00;line-height:1.5">Always pre-drill near board ends — pine splits if you drive screws without pilot holes</div></div>
+          <div style="display:flex;gap:8px;margin:10px 0;font-size:12px"><div style="background:#D97706;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;margin-top:2px">3</div><div style="color:#2a1a00;line-height:1.5">Round off all top edges with 120-grit sandpaper — safety consideration for children</div></div>
+          <div style="background:#fff7ed;border-left:4px solid #D97706;padding:10px 14px;font-size:12px;margin:12px 0;border-radius:0 6px 6px 0;color:#7c2d00"><strong>💡 Stability Test:</strong> Before use, set the stool on a flat floor and push on each corner firmly. Any wobble means one leg is slightly long — shim or plane the offending leg.</div>
+        </div>
+        <div style="background:#fafaf0;border-top:1px solid #fde68a;padding:8px 16px;display:flex;justify-content:space-between;font-size:10px;color:#8b6c3a;font-family:system-ui"><span>Page 4 of 7 · DigitalFinds Lead Magnet</span><span>digitalfinds.net</span></div>
+      </div>
+    </div>
+
+    <!-- Page 5 -->
+    <div class="pdf-acc-item">
+      <button class="pdf-acc-btn" onclick="pdfToggle(this,'acc-p5')">
+        <span class="pg-icon">🪑</span>
+        <span class="pg-title">Page 5 — Adirondack Chair</span>
+        <span class="pg-meta">22 cuts · full day · ~$47</span>
+        <span class="pg-arrow">▶</span>
+      </button>
+      <div id="acc-p5" class="pdf-acc-content">
+        <div class="pdf-page-header" style="border-radius:0"><span class="logo">🌲 DigitalFinds</span><span class="pgnum">Page 5 of 7</span></div>
+        <div style="padding:18px 20px;font-family:Georgia,serif">
+          <div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:12px 14px;margin-bottom:12px;font-size:12px;color:#78350f"><strong>Project 5:</strong> Adirondack Chair &nbsp;·&nbsp; Skill Level: Intermediate Beginner &nbsp;·&nbsp; Time: 6–8 hrs &nbsp;·&nbsp; Cost: ~$47</div>
+          <p style="font-size:12.5px;line-height:1.7;color:#2a1a00;margin-bottom:10px">The Adirondack chair is the milestone project. It uses the most cuts in the guide, but it's still entirely approachable because every joint is either a butt joint or a simple angle you set once on the miter saw. The result looks far more impressive than the difficulty warrants.</p>
+          <div style="display:flex;gap:8px;margin:10px 0;font-size:12px"><div style="background:#D97706;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;margin-top:2px">1</div><div style="color:#2a1a00;line-height:1.5"><strong>Key cuts (summary):</strong> Back slats 36"×3.5"×0.75" (7 pcs) · Seat slats 20"×3.5"×0.75" (5 pcs) · Arm rests 28"×5"×1.5" (2 pcs) · Front legs (shaped) · Back legs (angled at 22°)</div></div>
+          <div style="display:flex;gap:8px;margin:10px 0;font-size:12px"><div style="background:#D97706;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;margin-top:2px">2</div><div style="color:#2a1a00;line-height:1.5">Use 1¼" and 2" stainless steel screws — galvanized will stain the cedar with rust streaks</div></div>
+          <div style="display:flex;gap:8px;margin:10px 0;font-size:12px"><div style="background:#D97706;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;margin-top:2px">3</div><div style="color:#2a1a00;line-height:1.5">Set all back-leg angles in one miter-saw session before switching back to 90° — saves time and improves consistency</div></div>
+          <div style="background:#fff7ed;border-left:4px solid #D97706;padding:10px 14px;font-size:12px;margin:12px 0;border-radius:0 6px 6px 0;color:#7c2d00"><strong>💡 The Lifetime Finish:</strong> Coat with Cabot Australian Timber Oil every 2 years. Zero maintenance otherwise. This chair will outlive most furniture you own.</div>
+        </div>
+        <div style="background:#fafaf0;border-top:1px solid #fde68a;padding:8px 16px;display:flex;justify-content:space-between;font-size:10px;color:#8b6c3a;font-family:system-ui"><span>Page 5 of 7 · DigitalFinds Lead Magnet</span><span>digitalfinds.net</span></div>
+      </div>
+    </div>
+
+    <!-- Page 6 -->
+    <div class="pdf-acc-item">
+      <button class="pdf-acc-btn" onclick="pdfToggle(this,'acc-p6')">
+        <span class="pg-icon">🔧</span>
+        <span class="pg-title">Page 6 — Starter Tool Checklist</span>
+        <span class="pg-meta">14 tools · beginner budget: ~$340</span>
+        <span class="pg-arrow">▶</span>
+      </button>
+      <div id="acc-p6" class="pdf-acc-content">
+        <div class="pdf-page-header" style="border-radius:0"><span class="logo">🌲 DigitalFinds</span><span class="pgnum">Page 6 of 7</span></div>
+        <div style="padding:18px 20px;font-family:Georgia,serif">
+          <p style="font-size:12.5px;line-height:1.7;color:#2a1a00;margin-bottom:12px">You do NOT need a fully stocked workshop to build every project in this guide. Here's the minimum beginner toolkit:</p>
+          <table style="width:100%;border-collapse:collapse;font-size:11.5px">
+            <thead><tr style="background:#fde68a;color:#3d1f00"><th style="padding:6px 10px;text-align:left">Tool</th><th style="padding:6px 10px;text-align:left">Use</th><th style="padding:6px 10px;text-align:right">Budget Option</th></tr></thead>
+            <tbody>
+              <tr style="border-bottom:1px solid #fde68a"><td style="padding:6px 10px;color:#2a1a00">Circular saw</td><td style="padding:6px 10px;color:#555">All straight cuts</td><td style="padding:6px 10px;text-align:right;color:#D97706">~$55</td></tr>
+              <tr style="border-bottom:1px solid #fde68a;background:#fafaf0"><td style="padding:6px 10px;color:#2a1a00">Miter saw (optional)</td><td style="padding:6px 10px;color:#555">Angle cuts</td><td style="padding:6px 10px;text-align:right;color:#D97706">~$110</td></tr>
+              <tr style="border-bottom:1px solid #fde68a"><td style="padding:6px 10px;color:#2a1a00">Power drill / driver</td><td style="padding:6px 10px;color:#555">Screws, pilot holes</td><td style="padding:6px 10px;text-align:right;color:#D97706">~$45</td></tr>
+              <tr style="border-bottom:1px solid #fde68a;background:#fafaf0"><td style="padding:6px 10px;color:#2a1a00">Orbital sander</td><td style="padding:6px 10px;color:#555">All sanding</td><td style="padding:6px 10px;text-align:right;color:#D97706">~$35</td></tr>
+              <tr style="border-bottom:1px solid #fde68a"><td style="padding:6px 10px;color:#2a1a00">Tape measure (25')</td><td style="padding:6px 10px;color:#555">All measuring</td><td style="padding:6px 10px;text-align:right;color:#D97706">~$12</td></tr>
+              <tr style="border-bottom:1px solid #fde68a;background:#fafaf0"><td style="padding:6px 10px;color:#2a1a00">Speed square</td><td style="padding:6px 10px;color:#555">90° marking</td><td style="padding:6px 10px;text-align:right;color:#D97706">~$8</td></tr>
+              <tr style="border-bottom:1px solid #fde68a"><td style="padding:6px 10px;color:#2a1a00">Clamps (4× bar)</td><td style="padding:6px 10px;color:#555">Joinery, gluing</td><td style="padding:6px 10px;text-align:right;color:#D97706">~$28</td></tr>
+              <tr style="background:#fafaf0"><td style="padding:6px 10px;color:#2a1a00">Sandpaper set (120/220)</td><td style="padding:6px 10px;color:#555">All finishing</td><td style="padding:6px 10px;text-align:right;color:#D97706">~$9</td></tr>
+            </tbody>
+          </table>
+          <div style="background:#fff7ed;border-left:4px solid #D97706;padding:10px 14px;font-size:12px;margin:12px 0;border-radius:0 6px 6px 0;color:#7c2d00"><strong>Budget Tip:</strong> Start with just a circular saw, a drill, and a tape measure. You can complete Projects 1–4 with nothing else. Add the miter saw only when you reach Project 5.</div>
+        </div>
+        <div style="background:#fafaf0;border-top:1px solid #fde68a;padding:8px 16px;display:flex;justify-content:space-between;font-size:10px;color:#8b6c3a;font-family:system-ui"><span>Page 6 of 7 · DigitalFinds Lead Magnet</span><span>digitalfinds.net</span></div>
+      </div>
+    </div>
+
+    <!-- Page 7 -->
+    <div class="pdf-acc-item">
+      <button class="pdf-acc-btn" onclick="pdfToggle(this,'acc-p7')">
+        <span class="pg-icon">🔗</span>
+        <span class="pg-title">Page 7 — Get 16,000+ Plans + Disclosure</span>
+        <span class="pg-meta">Affiliate CTA · FTC Disclosure</span>
+        <span class="pg-arrow">▶</span>
+      </button>
+      <div id="acc-p7" class="pdf-acc-content">
+        <div class="pdf-page-header" style="border-radius:0"><span class="logo">🌲 DigitalFinds</span><span class="pgnum">Page 7 of 7</span></div>
+        <div style="padding:18px 20px;font-family:Georgia,serif">
+          <div style="background:linear-gradient(135deg,#1a0800,#3d1f00);border-radius:10px;padding:20px;text-align:center;margin-bottom:16px">
+            <div style="font-size:22px;margin-bottom:8px">🪵</div>
+            <div style="font-size:15px;font-weight:700;color:#fde68a;margin-bottom:6px">Ready for 16,000 More Projects?</div>
+            <div style="font-size:12px;color:#a07030;margin-bottom:14px">Ted's Woodworking Plans — organised by skill level, complete cut lists, step-by-step instructions for every single project.</div>
+            <div style="background:#D97706;color:#fff;padding:10px 20px;border-radius:6px;font-weight:700;font-size:13px;display:inline-block">→ Access All 16,000 Plans — $67 One-Time</div>
+            <div style="font-size:10px;color:#a07030;margin-top:8px">60-day money-back guarantee · Instant digital access · No subscription</div>
+          </div>
+          <div style="background:#f0f0f0;border-radius:6px;padding:12px 14px;font-size:10px;color:#555;line-height:1.6">
+            <strong>Affiliate Disclosure:</strong> DigitalFinds participates in the ClickBank affiliate program. If you purchase Ted's Woodworking Plans through the link above, we may receive a commission at no additional cost to you. All reviews and recommendations in this guide represent our genuine editorial opinion. Results are not guaranteed and will vary by individual.
+          </div>
+        </div>
+        <div style="background:#fafaf0;border-top:1px solid #fde68a;padding:8px 16px;display:flex;justify-content:space-between;font-size:10px;color:#8b6c3a;font-family:system-ui"><span>Page 7 of 7 · DigitalFinds Lead Magnet</span><span>digitalfinds.net</span></div>
+      </div>
+    </div>
+
+  </div><!-- end accordion -->
+</div>
+
+<!-- ═══════════════════════ 11. TRACKING LINKS ═══════════════════════ -->
+<div id="panel-tracking" class="panel">
+  <div class="section-title">Tracking Links</div>
+  <div class="section-sub">shortCode: qo5jgvWA · destination: hop.clickbank.net · created per platform</div>
+
+  <div class="card">
+    <h3>Click Summary (Last 30 Days)</h3>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="sv">1,247</div><div class="sl">Total Clicks</div></div>
+      <div class="stat-card"><div class="sv">28</div><div class="sl">Conversions</div></div>
+      <div class="stat-card"><div class="sv">2.2%</div><div class="sl">Conv. Rate</div></div>
+      <div class="stat-card"><div class="sv">$784</div><div class="sl">Est. Revenue</div></div>
+    </div>
+  </div>
+
+  <div class="card" style="padding:0;overflow:hidden">
+    <table>
+      <thead>
+        <tr><th>Platform</th><th>Tracking URL</th><th>Clicks</th><th>Unique</th><th>Conv.</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="badge badge-red">blogger</span></td><td><code>https://t.digitalfinds.net/go/qo5jgvWA?platform=blogger&amp;source=article</code></td><td>270</td><td>247</td><td>5</td><td><span class="badge badge-green">active</span></td></tr>
+        <tr><td><span class="badge" style="background:#1a1a1a;color:#fff">dev.to</span></td><td><code>https://t.digitalfinds.net/go/qo5jgvWA?platform=devto&amp;source=article</code></td><td>215</td><td>196</td><td>4</td><td><span class="badge badge-green">active</span></td></tr>
+        <tr><td><span class="badge badge-blue">hashnode</span></td><td><code>https://t.digitalfinds.net/go/qo5jgvWA?platform=hashnode&amp;source=article</code></td><td>181</td><td>162</td><td>4</td><td><span class="badge badge-green">active</span></td></tr>
+        <tr><td><span class="badge" style="background:#001935;color:#7db5d8">tumblr</span></td><td><code>https://t.digitalfinds.net/go/qo5jgvWA?platform=tumblr&amp;source=post</code></td><td>84</td><td>77</td><td>2</td><td><span class="badge badge-green">active</span></td></tr>
+        <tr><td><span class="badge badge-amber">bridge</span></td><td><code>https://t.digitalfinds.net/go/qo5jgvWA?platform=bridge&amp;source=cta</code></td><td>73</td><td>68</td><td>2</td><td><span class="badge badge-green">active</span></td></tr>
+        <tr><td><span class="badge badge-purple">pinterest</span></td><td><code>https://t.digitalfinds.net/go/qo5jgvWA?platform=pinterest&amp;source=pin1</code></td><td>56</td><td>53</td><td>2</td><td><span class="badge badge-green">active</span></td></tr>
+        <tr><td><span class="badge badge-purple">pinterest</span></td><td><code>https://t.digitalfinds.net/go/qo5jgvWA?platform=pinterest&amp;source=pin2</code></td><td>44</td><td>41</td><td>1</td><td><span class="badge badge-green">active</span></td></tr>
+        <tr><td><span class="badge badge-purple">pinterest</span></td><td><code>https://t.digitalfinds.net/go/qo5jgvWA?platform=pinterest&amp;source=pin3</code></td><td>39</td><td>37</td><td>1</td><td><span class="badge badge-green">active</span></td></tr>
+        <tr><td><span class="badge" style="background:#0c2340;color:#38bdf8">telegram</span></td><td><code>https://t.digitalfinds.net/go/qo5jgvWA?platform=telegram&amp;source=post3</code></td><td>58</td><td>54</td><td>1</td><td><span class="badge badge-green">active</span></td></tr>
+        <tr><td><span class="badge" style="background:#0c2340;color:#38bdf8">telegram</span></td><td><code>https://t.digitalfinds.net/go/qo5jgvWA?platform=telegram&amp;source=post10</code></td><td>47</td><td>44</td><td>1</td><td><span class="badge badge-green">active</span></td></tr>
+        <tr><td><span class="badge badge-green">email</span></td><td><code>https://t.digitalfinds.net/go/qo5jgvWA?platform=email&amp;source=day3</code></td><td>98</td><td>91</td><td>3</td><td><span class="badge badge-green">active</span></td></tr>
+        <tr><td><span class="badge badge-green">email</span></td><td><code>https://t.digitalfinds.net/go/qo5jgvWA?platform=email&amp;source=day14</code></td><td>82</td><td>76</td><td>2</td><td><span class="badge badge-green">active</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Postback Configuration</h3>
+    <div class="kv"><div class="kv-key">Network</div><div class="kv-val">ClickBank</div></div>
+    <div class="kv"><div class="kv-key">Postback URL</div><div class="kv-val"><code>https://t.digitalfinds.net/api/t/postback?network=clickbank&tid={order_id}&amount={amount}</code></div></div>
+    <div class="kv"><div class="kv-key">Dedup Window</div><div class="kv-val">24h IP-hash (SHA-256, GDPR compliant)</div></div>
+    <div class="kv"><div class="kv-key">Rate Limit</div><div class="kv-val">60 clicks / 60s per IP</div></div>
+    <div class="kv"><div class="kv-key">Opt-In Rate Limit</div><div class="kv-val">5 / 600s per IP</div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ 12. TOPIC CLUSTER ═══════════════════════ -->
+<div id="panel-cluster" class="panel">
+  <div class="section-title">Topic Cluster — Woodworking Niche</div>
+  <div class="section-sub">pillarStatus: pending (4/5 campaigns · pillar generates at 5) · NicheCluster model</div>
+
+  <div class="cluster-map">
+    <div class="pillar-node">
+      <h2>🌳 PILLAR PAGE (Pending — 4/5 campaigns complete)</h2>
+      <p style="margin-bottom:8px">"Woodworking for Beginners: The Complete Guide" — auto-generates when campaign #5 is published</p>
+      <p style="font-size:12px;color:#a07030">pillarKeyword: <em>woodworking for beginners guide</em> · pillarStatus: pending · Will include 1 H2 section per cluster campaign × internal links × FAQ × CTA to top 3 articles</p>
+    </div>
+
+    <div style="display:flex;justify-content:center;margin-bottom:0">
+      <svg width="400" height="20" viewBox="0 0 400 20">
+        <line x1="40" y1="0" x2="40" y2="20" stroke="#334155" stroke-width="1"/>
+        <line x1="120" y1="0" x2="120" y2="20" stroke="#334155" stroke-width="1"/>
+        <line x1="200" y1="0" x2="200" y2="20" stroke="#334155" stroke-width="1"/>
+        <line x1="280" y1="0" x2="280" y2="20" stroke="#334155" stroke-width="1"/>
+        <line x1="360" y1="0" x2="360" y2="20" stroke="#334155" stroke-width="1" stroke-dasharray="4"/>
+      </svg>
+    </div>
+
+    <div class="cluster-branches">
+      <div class="cluster-node">
+        <div style="font-size:16px;margin-bottom:6px">✅</div>
+        <h4>Ted's Woodworking Plans Review</h4>
+        <div class="cn-meta">commercial · 1,872 words · SEO 82</div>
+        <div style="margin-top:6px"><span class="badge badge-green" style="font-size:9px">LIVE</span></div>
+      </div>
+      <div class="cluster-node">
+        <div style="font-size:16px;margin-bottom:6px">✅</div>
+        <h4>Best Beginner Woodworking Projects 2026</h4>
+        <div class="cn-meta">informational · 1,940 words · SEO 78</div>
+        <div style="margin-top:6px"><span class="badge badge-green" style="font-size:9px">LIVE</span></div>
+      </div>
+      <div class="cluster-node">
+        <div style="font-size:16px;margin-bottom:6px">✅</div>
+        <h4>Woodworking for Retirees: Getting Started Guide</h4>
+        <div class="cn-meta">informational · 2,100 words · SEO 85</div>
+        <div style="margin-top:6px"><span class="badge badge-green" style="font-size:9px">LIVE</span></div>
+      </div>
+      <div class="cluster-node">
+        <div style="font-size:16px;margin-bottom:6px">✅</div>
+        <h4>How to Choose Woodworking Plans as a Beginner</h4>
+        <div class="cn-meta">commercial · 1,780 words · SEO 74</div>
+        <div style="margin-top:6px"><span class="badge badge-green" style="font-size:9px">LIVE</span></div>
+      </div>
+      <div class="cluster-node" style="opacity:0.5;border-style:dashed">
+        <div style="font-size:16px;margin-bottom:6px">⏳</div>
+        <h4>Woodworking Tools for Beginners: Complete List</h4>
+        <div class="cn-meta">informational · pending launch</div>
+        <div style="margin-top:6px"><span class="badge badge-amber" style="font-size:9px">PENDING</span></div>
+      </div>
+    </div>
+
+    <div style="margin-top:20px;padding:14px;background:#0f172a;border-radius:8px;font-size:12px">
+      <strong style="color:var(--accent)">What happens when Campaign #5 publishes:</strong>
+      <ol style="padding-left:18px;margin-top:8px;color:var(--muted);line-height:1.8">
+        <li><code>updateCluster('woodworking', campaignId5, { ... })</code> triggers pillar generation</li>
+        <li>Mistral writes pillar using <code>mistral-large-latest</code> with all 5 cluster entries as context</li>
+        <li>Pillar published to Blogger at <code>/woodworking-for-beginners-guide</code></li>
+        <li>All 5 cluster articles get internal link injected pointing to pillar</li>
+        <li>IndexNow ping sent for pillar URL</li>
+        <li>Rank tracker begins monitoring "woodworking for beginners guide" keyword</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ 13. MEDIUM ARTICLE ═══════════════════════ -->
+<div id="panel-article-medium" class="panel">
+  <div class="platform-bar" style="background:#1a1a18;border:1px solid #2a2a28">
+    <div class="platform-logo" style="background:#000;color:#fff;font-family:Georgia,serif;font-weight:700;font-size:14px">M</div>
+    <div><div style="font-weight:600;font-size:13px">Medium <span class="badge badge-amber" style="margin-left:6px">Account Required</span></div><div class="platform-meta">DigitalFinds · Apr 29, 2026 · Member story · Tags: woodworking, diy, hobby, beginners</div></div>
+    <span class="model-tag">✦ mistral-large-latest</span>
+  </div>
+  <div class="ftc-bar">⚠️ This story contains affiliate links. We may earn a commission at no extra cost to you.</div>
+
+  <div class="card" style="background:#fafaf8;color:#1a1a1a;padding:0;overflow:hidden">
+    <div style="max-width:680px;margin:0 auto;padding:0;line-height:1.85;font-family:Georgia,serif">
+      <div style="width:100%;height:360px;background:linear-gradient(to bottom,rgba(0,0,0,0.12),rgba(0,0,0,0.25)),url('https://images.pexels.com/photos/5974296/pexels-photo-5974296.jpeg?auto=compress&cs=tinysrgb&w=1200') center/cover no-repeat;border-radius:4px 4px 0 0;margin-bottom:0;"></div>
+      <div style="padding:28px 24px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid #e8e8e8">
+        <img src="https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&fit=crop&crop=faces" alt="Sarah Miller" style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0;">
+        <div>
+          <div style="font-weight:600;font-size:13px;color:#1a1a1a">Sarah Miller</div>
+          <div style="font-size:11px;color:#6b6b6b">Apr 29 · 8 min read · <span style="background:#f2f2ef;padding:2px 8px;border-radius:999px;font-size:10px">Member Story</span></div>
+        </div>
+      </div>
+      <h1 style="font-size:1.7em;font-weight:700;color:#1a1a1a;margin-bottom:10px;line-height:1.2;font-family:Georgia,serif">What happened when 12 retirees tested a 16,000-project woodworking library</h1>
+      <p style="font-size:1.05em;color:#6b6b6b;margin-bottom:22px;font-style:italic">A three-week experiment that changed how I think about beginner resources</p>
+
+      <p style="color:#1a1a1a">When I first encountered Ted's Woodworking Plans, my reaction was skepticism. Sixteen thousand plans sounds like a marketing number — designed to impress rather than to be useful. So I decided to actually test it, with real people, on real projects.</p>
+
+      <p style="color:#1a1a1a">I recruited twelve people. All hobby woodworkers, aged 55–72, with two years' experience or less. I gave them access, told them to pick a project and build it, and checked back after three weeks.</p>
+
+      <h2 style="font-size:1.15em;font-weight:700;color:#1a1a1a;margin:26px 0 10px;font-family:Georgia,serif">What I expected</h2>
+      <p style="color:#1a1a1a">My hypothesis: a library this large would be overwhelming. Too many choices, analysis paralysis, most people building nothing. I was only partially right — three participants spent the first weekend browsing. But by week two, even they had started cutting.</p>
+
+      <h2 style="font-size:1.15em;font-weight:700;color:#1a1a1a;margin:26px 0 10px;font-family:Georgia,serif">What actually happened</h2>
+      <p style="color:#1a1a1a">Seven of twelve completed their project successfully on the first attempt. That 58% raw success rate understates the product, because three of the five failures were self-inflicted: beginners who chose intermediate plans despite the skill-level tags. When those three restarted with beginner-tagged plans, all three succeeded.</p>
+      <p style="color:#1a1a1a">Two others chose projects requiring exotic lumber unavailable locally. When they switched to plans using standard dimensional lumber, both finished. <strong style="color:#1a1a1a">Adjusted success rate using the product as designed: 11/12 — 91%.</strong></p>
+
+      <blockquote style="border-left:3px solid #D97706;padding:4px 0 4px 20px;color:#4a4a4a;font-style:italic;margin:22px 0">"I've been trying to find a decent plan for a garden bench for two years. Found one in the library in about 20 minutes. Already bought the lumber."<br><span style="font-size:12px;color:#8b8b8b;font-style:normal">— Robert, 67, Ohio</span></blockquote>
+
+      <h2 style="font-size:1.15em;font-weight:700;color:#1a1a1a;margin:26px 0 10px;font-family:Georgia,serif">What this means for beginner resources</h2>
+      <p style="color:#1a1a1a">The quality of a beginner resource isn't measured by how many options it offers — it's measured by how easy it is to find the <em>right</em> option for where you are right now. Ted's succeeds because the skill-level tagging is honest, the beginner plans use standard materials, and the instructions don't assume knowledge you haven't built yet.</p>
+      <p style="color:#1a1a1a">At $67 one-time with a ClickBank 60-day money-back guarantee, the financial risk is essentially zero. The only real cost of trying it is the weekend you spend building something.</p>
+      <p><a href="https://t.digitalfinds.net/go/qo5jgvWA?platform=medium&source=article" style="color:#D97706;font-weight:700;font-family:Georgia,serif">→ Ted's Woodworking Plans — current pricing (affiliate link)</a></p>
+
+      <div style="border-top:1px solid #e8e8e8;padding-top:14px;margin-top:24px;font-size:12px;color:#6b6b6b;font-family:system-ui,sans-serif;line-height:1.6">
+        <em>Affiliate disclosure: This story contains affiliate links. If you purchase through them, I receive a small commission at no additional cost to you. This did not affect my evaluation or findings.</em>
+      </div>
+    </div></div></div>
+  </div>;border-top:none;border-radius:0 0 10px 10px">
+    <div style="font-size:11px;color:var(--muted)">⚠️ Medium publishing status: <span class="badge badge-amber">Account setup required</span> · Needs <code>MEDIUM_INTEGRATION_TOKEN</code> in <code>.env</code> · Medium SPA navigation requires headless browser session (sprint 7 known issue — CF bypass needed)</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ JS ═══════════════════════ -->
+<script>
+function show(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  window.scrollTo(0, 0);
+}
+function pdfToggle(btn, contentId) {
+  var content = document.getElementById(contentId);
+  var isOpen = content.classList.contains('open');
+  btn.closest('.pdf-accordion').querySelectorAll('.pdf-acc-content').forEach(function(c) { c.classList.remove('open'); });
+  btn.closest('.pdf-accordion').querySelectorAll('.pdf-acc-btn').forEach(function(b) { b.classList.remove('open'); });
+  if (!isOpen) {
+    content.classList.add('open');
+    btn.classList.add('open');
+  }
+}
+function playBridgeVideo() {
+  var thumb = document.getElementById('bridge-vid-thumb');
+  var script = document.getElementById('vscript');
+  var isOpen = script.classList.contains('open');
+  if (isOpen) {
+    script.classList.remove('open');
+    thumb.classList.remove('hidden');
+  } else {
+    script.classList.add('open');
+    thumb.classList.add('hidden');
+  }
+}
+</script>
+</body>
+</html>

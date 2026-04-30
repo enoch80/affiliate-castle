@@ -74,19 +74,42 @@ async function verifyHashnode(creds: Record<string, string>): Promise<VerifyResu
 }
 
 async function verifyMedium(creds: Record<string, string>): Promise<VerifyResult> {
-  if (!creds.integration_token) return { ok: false, error: 'integration_token is required' }
-  try {
-    const res = await fetch('https://api.medium.com/v1/me', {
-      headers: { Authorization: `Bearer ${creds.integration_token}`, 'Content-Type': 'application/json' },
-    })
-    if (!res.ok) return { ok: false, error: `Medium rejected token (HTTP ${res.status})` }
-    const data = (await res.json()) as { data?: { id?: string; username?: string; name?: string } }
-    const user = data.data
-    if (!user?.id) return { ok: false, error: 'Medium: no user data returned — token may be invalid' }
-    return { ok: true, username: user.username ?? user.name ?? 'medium-user' }
-  } catch (e) {
-    return { ok: false, error: `Network error: ${e instanceof Error ? e.message : String(e)}` }
+  // Path 1: Official integration token (API v1)
+  if (creds.integration_token) {
+    try {
+      const res = await fetch('https://api.medium.com/v1/me', {
+        headers: { Authorization: `Bearer ${creds.integration_token}`, 'Content-Type': 'application/json' },
+      })
+      if (!res.ok) return { ok: false, error: `Medium rejected token (HTTP ${res.status})` }
+      const data = (await res.json()) as { data?: { id?: string; username?: string; name?: string } }
+      const user = data.data
+      if (!user?.id) return { ok: false, error: 'Medium: no user data returned — token may be invalid' }
+      return { ok: true, username: user.username ?? user.name ?? 'medium-user' }
+    } catch (e) {
+      return { ok: false, error: `Network error: ${e instanceof Error ? e.message : String(e)}` }
+    }
   }
+
+  // Path 2: Cookie-based session auth (internal API)
+  const cookieStr = creds.cookie_auth ?? creds.cookie_session ?? ''
+  if (cookieStr) {
+    try {
+      const res = await fetch('https://medium.com/_/api/users/self', {
+        headers: { Cookie: cookieStr, 'User-Agent': 'Mozilla/5.0' },
+      })
+      if (!res.ok) return { ok: false, error: `Medium session expired or invalid (HTTP ${res.status})` }
+      const text = await res.text()
+      const cleaned = text.replace(/^\]\)\}[^\n]*\n/, '')
+      const json = JSON.parse(cleaned) as { payload?: { user?: { username?: string; name?: string; id?: string } } }
+      const user = json?.payload?.user
+      if (!user?.id) return { ok: false, error: 'Medium: session valid but no user data returned' }
+      return { ok: true, username: user.username ?? user.name ?? creds.username ?? 'medium-user' }
+    } catch (e) {
+      return { ok: false, error: `Network error: ${e instanceof Error ? e.message : String(e)}` }
+    }
+  }
+
+  return { ok: false, error: 'integration_token or cookie_session is required' }
 }
 
 async function verifyTumblr(creds: Record<string, string>): Promise<VerifyResult> {

@@ -19,6 +19,7 @@ import { getServerSession } from 'next-auth'
 import crypto from 'crypto'
 import { authOptions } from '@/lib/auth'
 import { getPlatform } from '@/lib/platform-registry'
+import { buildOAuth1Header } from '@/lib/oauth1'
 
 const REDIRECT_URI = `${process.env.NEXTAUTH_URL ?? ''}/api/auth/oauth/callback`
 
@@ -41,32 +42,16 @@ async function tumblrRequestToken(callbackUrl: string): Promise<{ token: string;
   const consumerSecret = process.env.TUMBLR_CONSUMER_SECRET ?? ''
   if (!consumerKey || !consumerSecret) throw new Error('TUMBLR_CONSUMER_KEY / TUMBLR_CONSUMER_SECRET not set')
 
-  const nonce = crypto.randomBytes(16).toString('hex')
-  const timestamp = Math.floor(Date.now() / 1000).toString()
   const requestTokenUrl = 'https://www.tumblr.com/oauth/request_token'
 
-  const params: Record<string, string> = {
-    oauth_callback: callbackUrl,
-    oauth_consumer_key: consumerKey,
-    oauth_nonce: nonce,
-    oauth_signature_method: 'HMAC-SHA1',
-    oauth_timestamp: timestamp,
-    oauth_version: '1.0',
-  }
-
-  const paramStr = Object.keys(params)
-    .sort()
-    .map((k) => `${encodeURIComponent(k)}=${encodeURIComponent(params[k])}`)
-    .join('&')
-
-  const baseStr = `POST&${encodeURIComponent(requestTokenUrl)}&${encodeURIComponent(paramStr)}`
-  const sigKey = `${encodeURIComponent(consumerSecret)}&`
-  params.oauth_signature = crypto.createHmac('sha1', sigKey).update(baseStr).digest('base64')
-
-  const authHeader = 'OAuth ' + Object.keys(params)
-    .filter((k) => k.startsWith('oauth_'))
-    .map((k) => `${encodeURIComponent(k)}="${encodeURIComponent(params[k])}"`)
-    .join(', ')
+  // RFC 5849 §3.1 — request_token step: no token yet, oauth_callback in protocol fields
+  const authHeader = buildOAuth1Header({
+    method: 'POST',
+    url: requestTokenUrl,
+    consumerKey,
+    consumerSecret,
+    extraFields: [['oauth_callback', callbackUrl]],
+  })
 
   const res = await fetch(requestTokenUrl, {
     method: 'POST',

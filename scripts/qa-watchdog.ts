@@ -69,6 +69,9 @@ interface QAWatchdogState {
 // Paths
 // ---------------------------------------------------------------------------
 
+import { fileURLToPath } from "url";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const ROOT = path.resolve(__dirname, "..");
 const STATE_FILE = path.join(ROOT, "tmp", "qa-watchdog-state.json");
 const KB_FILE = path.join(ROOT, "qa_knowledge_base.json");

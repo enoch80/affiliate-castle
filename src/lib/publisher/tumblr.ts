@@ -2,7 +2,7 @@
  * Tumblr publisher
  *
  * API: Tumblr API v2
- * Auth: OAuth 1.0a — we use the simpler API key + token approach
+ * Auth: OAuth 1.0a (RFC 5849) — HMAC-SHA1 signed requests
  * Docs: https://www.tumblr.com/docs/en/api/v2#posts
  *
  * Tumblr has no affiliate link restrictions — publishes short-form HTML posts.
@@ -25,51 +25,83 @@ export interface TumblrPublishResult {
   postId: number
 }
 
-/** Minimal OAuth 1.0a signature for Tumblr API calls */
+// RFC 5849 §3.6 — percent-encode per OAuth spec (encodeURIComponent + unreserved extras)
+function pct(value: string): string {
+  return encodeURIComponent(value)
+    .replace(/!/g, '%21')
+    .replace(/'/g, '%27')
+    .replace(/\(/g, '%28')
+    .replace(/\)/g, '%29')
+    .replace(/\*/g, '%2A')
+}
+
+// RFC 5849 §3.4.1.1 — build the normalised parameter string
+// All request + oauth params, sorted lexicographically by encoded key then encoded value
+function buildParamString(requestParams: Record<string, string>, oauthFields: [string, string][]): string {
+  // Merge into a flat list of [encodedKey, encodedValue] pairs
+  const pairs: [string, string][] = [
+    ...Object.entries(requestParams).map(([k, v]): [string, string] => [pct(k), pct(v)]),
+    ...oauthFields.map(([k, v]): [string, string] => [pct(k), pct(v)]),
+  ]
+  // Sort: primary by key, secondary by value (per spec)
+  pairs.sort(([ka, va], [kb, vb]) => {
+    if (ka < kb) return -1
+    if (ka > kb) return 1
+    return va < vb ? -1 : va > vb ? 1 : 0
+  })
+  return pairs.map(([k, v]) => `${k}=${v}`).join('&')
+}
+
+// RFC 5849 §3.4.2 — HMAC-SHA1 signing key = pct(secret)&pct(tokenSecret)
+function signingKey(consumerSecret: string, tokenSecret: string): string {
+  return `${pct(consumerSecret)}&${pct(tokenSecret)}`
+}
+
+// RFC 5849 §3.4.1 — signature base string = METHOD&pct(baseUrl)&pct(paramString)
+function signatureBaseString(method: string, baseUrl: string, normalisedParams: string): string {
+  return `${method.toUpperCase()}&${pct(baseUrl)}&${pct(normalisedParams)}`
+}
+
+/**
+ * Build the OAuth Authorization header for a Tumblr API request.
+ * Implements RFC 5849 OAuth 1.0a with HMAC-SHA1 signature method.
+ */
 function buildOAuthHeader(
-  method: string,
-  url: string,
-  params: Record<string, string>,
+  httpMethod: string,
+  requestUrl: string,
+  bodyParams: Record<string, string>,
   consumerKey: string,
   consumerSecret: string,
-  oauthToken: string,
-  oauthTokenSecret: string
+  accessToken: string,
+  accessTokenSecret: string
 ): string {
-  const oauthParams: Record<string, string> = {
-    oauth_consumer_key: consumerKey,
-    oauth_nonce: crypto.randomBytes(16).toString('hex'),
-    oauth_signature_method: 'HMAC-SHA1',
-    oauth_timestamp: String(Math.floor(Date.now() / 1000)),
-    oauth_token: oauthToken,
-    oauth_version: '1.0',
-  }
+  // Generate fresh nonce + timestamp for each request (replay attack prevention)
+  const nonce = crypto.randomBytes(18).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 24)
+  const timestamp = String(Math.floor(Date.now() / 1000))
 
-  const allParams = { ...params, ...oauthParams }
-  const sortedKeys = Object.keys(allParams).sort()
-  const paramString = sortedKeys
-    .map((k) => `${encodeURIComponent(k)}=${encodeURIComponent(allParams[k])}`)
-    .join('&')
+  // OAuth protocol fields (excludes oauth_signature — added after signing)
+  const oauthFields: [string, string][] = [
+    ['oauth_consumer_key', consumerKey],
+    ['oauth_nonce', nonce],
+    ['oauth_signature_method', 'HMAC-SHA1'],
+    ['oauth_timestamp', timestamp],
+    ['oauth_token', accessToken],
+    ['oauth_version', '1.0'],
+  ]
 
-  const signatureBase = [
-    method.toUpperCase(),
-    encodeURIComponent(url),
-    encodeURIComponent(paramString),
-  ].join('&')
+  // Compute signature
+  const paramString = buildParamString(bodyParams, oauthFields)
+  const baseStr = signatureBaseString(httpMethod, requestUrl, paramString)
+  const key = signingKey(consumerSecret, accessTokenSecret)
+  const signature = crypto.createHmac('sha1', key).update(baseStr).digest('base64')
 
-  const signingKey = `${encodeURIComponent(consumerSecret)}&${encodeURIComponent(oauthTokenSecret)}`
-  const signature = crypto
-    .createHmac('sha1', signingKey)
-    .update(signatureBase)
-    .digest('base64')
-
-  oauthParams['oauth_signature'] = signature
-
-  const headerParts = Object.entries(oauthParams)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([k, v]) => `${encodeURIComponent(k)}="${encodeURIComponent(v)}"`)
+  // Build Authorization header value — only oauth_ fields go in header (not body params)
+  const headerFields: [string, string][] = [...oauthFields, ['oauth_signature', signature]]
+  const headerValue = headerFields
+    .map(([k, v]) => `${pct(k)}="${pct(v)}"`)
     .join(', ')
 
-  return `OAuth ${headerParts}`
+  return `OAuth ${headerValue}`
 }
 
 export async function publishToTumblr(

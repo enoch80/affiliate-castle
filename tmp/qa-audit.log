@@ -1,0 +1,15 @@
+2026-04-28T02:03:39.418Z INIT session=bbca02ce-c5e1-437a-8053-9affc46b7442 goal="Analyze codebase vs plan.md and fill documentation gaps"
+2026-04-28T02:07:26.517Z RESEARCH finding="plan.md updated with 12 new sections covering: all 12 sprints complete (123/123)" source="plan.md"
+2026-04-28T02:07:35.664Z DONE summary="plan.md fully updated from 2026-04-23 snapshot to 2026-04-28: sprint completion status (123/123), Phase 2 platform activation section, OAuth connect flow (3 new routes), browser agent server module, mobile UI changes, Channels page, analytics cron, 29 complete API routes, full env vars, complete file tree, QA infrastructure docs, known bugs table, updated setup checklist" passed=0 failed=0
+2026-04-28T18:05:08.438Z INIT session=26e4db68-4be2-4e26-9e74-b7e8d34b8761 goal="Cross-reference full session history vs planup1.md for gaps, validate Contabo runtime health, build and deploy full-stack TedWoodworking preview"
+2026-04-28T18:08:56.762Z PASS test="Contabo health check — status:ok, db:ok" total_passed=1
+2026-04-28T18:08:59.261Z PASS test="docker compose — all 6 services Up" total_passed=2
+2026-04-28T18:09:01.906Z RESEARCH finding="castle.md line 34 still references Ollama+Llama3.3 70B but planup1.md Part 7 spe" source="castle.md:34 vs planup1.md PART 7"
+2026-04-28T18:09:04.476Z RESEARCH finding="castle.md Platform Status table shows Hashnode as CF BLOCKED but planup1.md Part" source="castle.md §8 vs planup1.md PART 8"
+2026-04-28T18:09:07.148Z RESEARCH finding="planup1.md Part 11 lists 10 new lib files still to create: llm-provider.ts, sche" source="planup1.md PART 11"
+2026-04-28T18:09:09.771Z RESEARCH finding="castle.md source tree does not list scripts/qa-watchdog.ts or scripts/api-watchd" source="castle.md §5"
+2026-04-28T18:09:12.902Z RESEARCH finding="planup1.md omits the public/preview/tedwoodworking.html partial file (2 tabs onl" source="public/preview/tedwoodworking.html"
+2026-04-28T18:32:44.803Z INIT session=fb051d66-3e3a-4b9c-b67d-3b9d64c50149 goal="Resume after network interruption: build full-stack TedWoodworking campaign preview HTML (all 12 content types), deploy to Contabo"
+2026-04-28T19:02:31.558Z INIT session=b7b4bf27-83c8-418d-a677-57325ec0e668 goal="Build and deploy full-stack TedWoodworking campaign preview — all 12 content types"
+2026-04-29T02:30:30.277Z PASS test="preview page deployed at https://app.digitalfinds.net/preview/campaign-preview.html" total_passed=1
+2026-04-29T02:30:38.302Z DONE summary="Campaign preview deployed: all 12 content types, HTTP 200, served at https://app.digitalfinds.net/preview/campaign-preview.html via domainhunt_proxy nginx container conf.d/affiliate-castle.conf with /opt/affiliate-castle/public/img volume mount; permanent via docker-compose volume mount" passed=1 failed=0

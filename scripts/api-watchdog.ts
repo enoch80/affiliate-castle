@@ -61,6 +61,9 @@ interface WatchdogState {
 // Paths
 // ---------------------------------------------------------------------------
 
+import { fileURLToPath } from "url";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const ROOT = path.resolve(__dirname, "..");
 const STATE_FILE = path.join(ROOT, "tmp", "api-watchdog-state.json");
 const STALL_THRESHOLD_MS = 30_000; // 30 seconds

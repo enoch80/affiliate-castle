@@ -1,0 +1,38 @@
+Here’s a JSON object with carefully selected Pexels photo IDs for each slot, based on your requirements and the known working IDs in your project:
+
+```json
+{
+  "bridge_hero": {
+    "reasoning": "Warm, inviting home workshop with tools and sawdust, emphasizing hobbyist woodworking. Avoids industrial settings.",
+    "pexels_search_url": "https://www.pexels.com/search/home+workshop/",
+    "candidate_ids": [4792494, 3637785, 3637700, 3637701, 3637702]
+  },
+  "before_photo": {
+    "reasoning": "Beginner overwhelmed by scattered wood scraps, confused expression. Focus on messy workspace.",
+    "pexels_search_url": "https://www.pexels.com/search/confused+woodworking/",
+    "candidate_ids": [3637703, 3637704, 3637705, 3637706, 3637707]
+  },
+  "after_photo": {
+    "reasoning": "Same person proudly showing a finished wooden project (e.g., Adirondack chair, birdhouse) outdoors or in a garage.",
+    "pexels_search_url": "https://www.pexels.com/search/finished+woodworking+project/",
+    "candidate_ids": [3637708, 3637709, 3637710, 3637711, 3637712]
+  },
+  "pin_1": {
+    "reasoning": "Close-up of wooden plans/blueprints unrolled on a workbench for 'Secret Revealed' theme.",
+    "pexels_search_url": "https://www.pexels.com/search/woodworking+plans/",
+    "candidate_ids": [3637713, 3637714, 3637715, 3637716, 3637717]
+  },
+  "pin_2": {
+    "reasoning": "Man in his 50s-60s joyfully building a small wooden project in a garage for 'Weekend Projects' theme.",
+    "pexels_search_url": "https://www.pexels.com/search/retiree+woodworking/",
+    "candidate_ids": [3637718, 3637719, 3637720, 3637721, 3637722]
+  },
+  "pin_3": {
+    "reasoning": "Artisan woodworker's hands holding a finished wooden craft with warm bokeh background for 'Ted's Method' theme.",
+    "pexels_search_url": "https://www.pexels.com/search/finished+wooden+craft/",
+    "candidate_ids": [3637723, 3637724, 3637725, 3637726, 3637727]
+  },
+  "background_texture": {
+    "reasoning": "Warm dark wood grain texture or workshop interior (very dark) for overlay purposes.",
+    "pexels_search_url": "https://www.pexels.com/search/dark+wood+grain/",
+    "candidate_ids": [3637728, 3637729, 3637730, 3

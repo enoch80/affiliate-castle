@@ -3,6 +3,57 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { PLATFORM_REGISTRY, type PlatformEntry } from '@/lib/platform-registry'
 
+// ── Platform brand icons (inline SVG) ─────────────────────────────────────────
+const PLATFORM_ICONS: Record<string, React.ReactNode> = {
+  devto: (
+    <svg viewBox="0 0 40 40" fill="none" className="w-8 h-8" aria-label="DEV">
+      <rect width="40" height="40" rx="8" fill="#0A0A0A" />
+      <text x="50%" y="56%" dominantBaseline="middle" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold" fontFamily="monospace">DEV</text>
+    </svg>
+  ),
+  hashnode: (
+    <svg viewBox="0 0 40 40" fill="none" className="w-8 h-8" aria-label="Hashnode">
+      <rect width="40" height="40" rx="8" fill="#2962FF" />
+      <path d="M20 8L32 14.5v11L20 32 8 25.5v-11L20 8z" fill="white" opacity="0.95" />
+      <circle cx="20" cy="20" r="4" fill="#2962FF" />
+    </svg>
+  ),
+  medium: (
+    <svg viewBox="0 0 40 40" fill="none" className="w-8 h-8" aria-label="Medium">
+      <rect width="40" height="40" rx="8" fill="#191919" />
+      <ellipse cx="14" cy="20" rx="6" ry="7.5" fill="white" />
+      <ellipse cx="27" cy="20" rx="3" ry="7" fill="white" />
+      <ellipse cx="35" cy="20" rx="2" ry="5.5" fill="white" />
+    </svg>
+  ),
+  tumblr: (
+    <svg viewBox="0 0 40 40" fill="none" className="w-8 h-8" aria-label="Tumblr">
+      <rect width="40" height="40" rx="8" fill="#35465C" />
+      <path d="M18 10v6h-4v5h4v8c0 3 1.5 5 5 5h3v-5h-2c-1 0-1.5-.5-1.5-1.5V21h3.5v-5H22.5V10H18z" fill="white" />
+    </svg>
+  ),
+  blogger: (
+    <svg viewBox="0 0 40 40" fill="none" className="w-8 h-8" aria-label="Blogger">
+      <rect width="40" height="40" rx="8" fill="#FF5722" />
+      <path d="M12 12h10c3 0 5 2 5 5v1h-3v-1c0-1-.5-1.5-1.5-1.5H12V12zm0 8h16c0 3-2 8-7 8H12V20z" fill="white" />
+    </svg>
+  ),
+  pinterest: (
+    <svg viewBox="0 0 40 40" fill="none" className="w-8 h-8" aria-label="Pinterest">
+      <rect width="40" height="40" rx="8" fill="#E60023" />
+      <path d="M20 7c-7.2 0-13 5.8-13 13 0 5.5 3.4 10.2 8.3 12.1-.1-1-.2-2.6.1-3.7l1.5-6.3s-.4-.8-.4-1.9c0-1.8 1-3.1 2.3-3.1 1.1 0 1.6.8 1.6 1.8 0 1.1-.7 2.7-1 4.2-.3 1.2.6 2.2 1.8 2.2 2.2 0 3.7-2.3 3.7-5.6 0-2.9-2.1-5-5.2-5-3.5 0-5.6 2.6-5.6 5.3 0 1 .4 2.1 1 2.7.1.1.1.3.1.4l-.4 1.5c-.1.3-.3.4-.6.2-1.6-.7-2.6-3-2.6-4.8 0-3.9 2.8-7.4 8.1-7.4 4.3 0 7.6 3 7.6 7.1 0 4.2-2.7 7.6-6.4 7.6-1.3 0-2.4-.7-2.8-1.4l-.8 2.9c-.3 1.1-1 2.5-1.5 3.3.6.2 1.1.2 1.7.2 7.2 0 13-5.8 13-13S27.2 7 20 7z" fill="white" />
+    </svg>
+  ),
+}
+
+function PlatformIcon({ id }: { id: string }) {
+  return PLATFORM_ICONS[id] ?? (
+    <div className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center text-slate-300 text-xs font-bold">
+      {id.slice(0, 2).toUpperCase()}
+    </div>
+  )
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface StoredAccount {
@@ -39,6 +90,7 @@ function PlatformCard({
   const [cardState, setCardState] = useState<CardState>('idle')
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [showForm, setShowForm] = useState(!account)
+  const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({})
   const popupRef = useRef<Window | null>(null)
 
   useEffect(() => {
@@ -206,17 +258,20 @@ function PlatformCard({
   const isOAuth = config.authType === 'oauth2' || config.authType === 'oauth1'
 
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6">
+    <div className={`bg-slate-800 border rounded-2xl p-5 transition-colors ${isConnected ? 'border-slate-600/80' : 'border-slate-700'}`}>
       {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="min-w-0 flex-1">
-          <h3 className="text-white font-semibold text-sm">{config.name}</h3>
-          <p className="text-slate-400 text-xs mt-0.5">{config.description}</p>
+      <div className="flex items-center gap-3 mb-4">
+        <div className="shrink-0">
+          <PlatformIcon id={config.id} />
         </div>
-        <div className="ml-3 shrink-0">
+        <div className="min-w-0 flex-1">
+          <h3 className="text-white font-semibold text-sm leading-tight">{config.name}</h3>
+          <p className="text-slate-400 text-xs mt-0.5 leading-tight">{config.description}</p>
+        </div>
+        <div className="ml-1 shrink-0">
           {isConnected ? (
-            <span className="flex items-center gap-1.5 text-emerald-400 text-xs font-medium bg-emerald-400/10 border border-emerald-400/20 px-2.5 py-1 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+            <span className="flex items-center gap-1.5 text-emerald-400 text-xs font-medium bg-emerald-400/10 border border-emerald-400/25 px-2.5 py-1 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block" />
               Connected
             </span>
           ) : (
@@ -338,16 +393,29 @@ function PlatformCard({
                   <span className="text-slate-500 ml-1">(optional)</span>
                 )}
               </label>
-              <input
-                type={field.type}
-                placeholder={field.placeholder ?? ''}
-                value={values[field.key] ?? ''}
-                onChange={(e) => setValue(field.key, e.target.value)}
-                autoComplete="off"
-                spellCheck={false}
-                onKeyDown={(e) => { if (e.key === 'Enter') void handleConnect() }}
-                className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm font-mono"
-              />
+              <div className="relative">
+                <input
+                  type={field.type === 'password' && !showSecrets[field.key] ? 'password' : 'text'}
+                  placeholder={field.placeholder ?? ''}
+                  value={values[field.key] ?? ''}
+                  onChange={(e) => setValue(field.key, e.target.value)}
+                  autoComplete="off"
+                  spellCheck={false}
+                  onKeyDown={(e) => { if (e.key === 'Enter') void handleConnect() }}
+                  className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm font-mono pr-9"
+                />
+                {field.type === 'password' && (
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    onClick={() => setShowSecrets((p) => ({ ...p, [field.key]: !p[field.key] }))}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors text-xs"
+                    aria-label={showSecrets[field.key] ? 'Hide' : 'Show'}
+                  >
+                    {showSecrets[field.key] ? '🙈' : '👁'}
+                  </button>
+                )}
+              </div>
             </div>
           ))}
 
@@ -415,18 +483,22 @@ function ConnectionSummary({ accounts }: { accounts: StoredAccount[] }) {
   const total = PLATFORM_REGISTRY.length
   return (
     <div className="flex items-center gap-3 bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 mb-6">
-      <div className="flex gap-1">
+      <div className="flex gap-2 items-center">
         {PLATFORM_REGISTRY.map((p) => {
           const isConn = accounts.some((a) => a.platform === p.id)
           return (
             <div
               key={p.id}
               title={`${p.name}: ${isConn ? 'Connected' : 'Not connected'}`}
-              className={`w-2 h-2 rounded-full ${isConn ? 'bg-emerald-400' : 'bg-slate-600'}`}
-            />
+              className={`transition-opacity ${isConn ? 'opacity-100' : 'opacity-25 grayscale'}`}
+              style={{ width: 22, height: 22 }}
+            >
+              <PlatformIcon id={p.id} />
+            </div>
           )
         })}
       </div>
+      <div className="w-px h-5 bg-slate-700 mx-1" />
       <span className="text-sm text-slate-300">
         <span className="text-white font-semibold">{connected}</span>
         <span className="text-slate-500"> / {total}</span>
@@ -483,11 +555,13 @@ export default function SettingsPage() {
 
   return (
     <div className="p-4 sm:p-8 max-w-3xl">
-      <h1 className="text-2xl font-bold text-white mb-1">Platform Connections</h1>
-      <p className="text-slate-400 mb-6 text-sm">
-        Connect publishing platforms. OAuth platforms connect with one click — no copy-pasting tokens.
-        Credentials are stored AES-256-GCM encrypted.
-      </p>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-white mb-1">Platform Connections</h1>
+        <p className="text-slate-400 text-sm">
+          Connect publishing platforms. OAuth platforms connect with one click — no copy-pasting tokens.
+          Credentials are stored <span className="text-slate-300 font-medium">AES-256-GCM</span> encrypted.
+        </p>
+      </div>
 
       {loading ? (
         <div className="space-y-4">
@@ -516,16 +590,23 @@ export default function SettingsPage() {
       )}
 
       {/* Telegram info block */}
-      <div className="mt-6 bg-slate-800/40 border border-slate-700/50 rounded-2xl p-5 flex items-center justify-between">
-        <div>
+      <div className="mt-6 bg-slate-800/40 border border-slate-700/50 rounded-2xl p-5 flex items-center gap-4">
+        <div className="shrink-0">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: '#229ED9' }}>
+            <svg viewBox="0 0 24 24" fill="white" className="w-5 h-5" aria-label="Telegram">
+              <path d="M11.944 0A12 12 0 1 0 24 12 12 12 0 0 0 11.944 0zm6.083 8.016l-2.03 9.57c-.153.661-.555.82-1.123.51l-3.093-2.28-1.49 1.435c-.165.165-.304.304-.624.304l.223-3.155 5.74-5.185c.25-.222-.054-.345-.385-.123L7.4 14.097 4.343 13.09c-.647-.202-.66-.647.135-.96l11.91-4.593c.54-.196 1.01.131.84.958z" />
+            </svg>
+          </div>
+        </div>
+        <div className="flex-1">
           <h3 className="text-white font-semibold text-sm">Telegram Channels</h3>
-          <p className="text-slate-400 text-xs mt-1">
+          <p className="text-slate-400 text-xs mt-0.5">
             Bot token + channel management is handled in the Channels section.
           </p>
         </div>
         <a
           href="/dashboard/channels"
-          className="text-xs font-medium text-indigo-400 hover:text-indigo-300 transition-colors whitespace-nowrap ml-4"
+          className="text-xs font-medium text-indigo-400 hover:text-indigo-300 transition-colors whitespace-nowrap shrink-0"
         >
           Manage Channels →
         </a>

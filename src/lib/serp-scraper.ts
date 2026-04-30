@@ -23,6 +23,14 @@ export interface SerpResult {
   namedEntities: string[]
 }
 
+/** SERP-level data extracted from the search results page itself */
+export interface SerpPageData {
+  /** People Also Ask questions extracted from the SERP */
+  paaQuestions: string[]
+  /** Related searches extracted from the bottom of the SERP */
+  relatedSearches: string[]
+}
+
 const USER_AGENTS = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
@@ -95,7 +103,9 @@ async function fetchPage(url: string, ua: string): Promise<string> {
 }
 
 /** Scrape Bing top 10 organic results for a keyword */
-export async function scrapeSerpTop10(keyword: string): Promise<SerpResult[]> {
+export async function scrapeSerpTop10(
+  keyword: string,
+): Promise<{ results: SerpResult[]; serpPageData: SerpPageData }> {
   console.log(`[serp-scraper] Scraping Bing top 10 for: "${keyword}"`)
 
   const ua = randomUA()
@@ -104,6 +114,8 @@ export async function scrapeSerpTop10(keyword: string): Promise<SerpResult[]> {
 
   let browser
   let serpLinks: { url: string; title: string; snippet: string }[] = []
+  let paaQuestions: string[] = []
+  let relatedSearches: string[] = []
 
   try {
     browser = await chromium.launch({ headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage'] })
@@ -127,7 +139,19 @@ export async function scrapeSerpTop10(keyword: string): Promise<SerpResult[]> {
       }).filter((r) => r.url && r.url.startsWith('http'))
     )
 
-    console.log(`[serp-scraper] Found ${serpLinks.length} SERP results from Bing`)
+    // Extract People Also Ask questions
+    paaQuestions = await page.$$eval(
+      '.b_alsoask button, [data-tag="AlsoAsk"] .b_rcTxt',
+      (els) => els.map((el) => el.textContent?.trim() ?? '').filter(Boolean).slice(0, 8),
+    ).catch(() => [] as string[])
+
+    // Extract Related Searches from bottom of SERP
+    relatedSearches = await page.$$eval(
+      '#b_context .b_vList li a',
+      (els) => els.map((el) => el.textContent?.trim() ?? '').filter(Boolean).slice(0, 8),
+    ).catch(() => [] as string[])
+
+    console.log(`[serp-scraper] Found ${serpLinks.length} SERP results from Bing, ${paaQuestions.length} PAA, ${relatedSearches.length} related searches`)
   } catch (err) {
     console.error('[serp-scraper] Bing scrape error:', err)
   } finally {
@@ -159,7 +183,7 @@ export async function scrapeSerpTop10(keyword: string): Promise<SerpResult[]> {
 
   if (serpLinks.length === 0) {
     console.warn('[serp-scraper] No SERP results found — returning empty array')
-    return []
+    return { results: [], serpPageData: { paaQuestions, relatedSearches } }
   }
 
   // Now fetch and parse each result page
@@ -184,5 +208,5 @@ export async function scrapeSerpTop10(keyword: string): Promise<SerpResult[]> {
   }
 
   console.log(`[serp-scraper] Parsed ${results.length} SERP pages`)
-  return results
+  return { results, serpPageData: { paaQuestions, relatedSearches } }
 }

@@ -21,7 +21,7 @@ import IORedis from 'ioredis'
 import { prisma } from '../lib/prisma'
 import { resolveHoplink } from '../lib/link-resolver'
 import { scrapeOfferPage } from '../lib/offer-scraper'
-import { extractOfferDetails } from '../lib/llm-extractor'
+import { extractOfferDetails, CANONICAL_NICHES, type CanonicalNiche } from '../lib/llm-extractor'
 import { scrapeSerpTop10 } from '../lib/serp-scraper'
 import { analyzeSemanticGap } from '../lib/semantic-gap'
 import { generateContentBrief } from '../lib/content-brief'
@@ -106,6 +106,12 @@ async function processOfferJob(job: Job<OfferPipelineJobData>) {
     await prisma.offer.update({ where: { id: offerId }, data: { status: 'extraction_failed' } })
     throw err
   }
+
+  // Step 3b: Niche normalization — map LLM output to canonical niche set
+  const rawNiche = (extraction.niche || '').toLowerCase().replace(/[^a-z_]/g, '_')
+  extraction.niche = (CANONICAL_NICHES as readonly string[]).includes(rawNiche)
+    ? (rawNiche as CanonicalNiche)
+    : 'other'
 
   // Step 4: Persist Offer + MarketResearch
   await job.updateProgress(80)

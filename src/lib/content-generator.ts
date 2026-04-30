@@ -1,8 +1,8 @@
 /**
  * Content Generator — Sprint 4
  *
- * Generates all 12 content types from the content brief using the local
- * Ollama LLM with rule-based fallbacks. Every type uses the brief as
+ * Generates all 12 content types from the content brief using Mistral via
+ * OpenRouter with rule-based fallbacks. Every type uses the brief as
  * direct context rather than writing blind.
  *
  * 12 content types:
@@ -11,7 +11,7 @@
  *  3.  article_hashnode  — full SEO article for Hashnode
  *  4.  article_blogger   — full SEO article for Blogger
  *  5.  article_tumblr    — shorter adapted article for Tumblr
- *  6.  pinterest_captions— 5 Pinterest captions (125 chars each)
+ *  6.  pinterest_captions— 3 structured pin objects ({title, description, hashtags})
  *  7.  telegram_posts    — 10 Telegram posts (carousel series)
  *  8.  email_sequence    — 7 emails + 3 re-engage emails (JSON array)
  *  9.  lead_magnet       — lead magnet body (7-12 page HTML)
@@ -21,6 +21,7 @@
  */
 
 import type { ContentBrief } from './content-brief'
+import { callMistral } from './mistral'
 
 export interface GeneratedContent {
   type: string
@@ -41,29 +42,10 @@ interface OfferContext {
   secondaryKeywords: string[]
 }
 
-const OLLAMA_URL = process.env.OLLAMA_BASE_URL || 'http://ollama:11434'
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3.3:70b'
-const LLM_TIMEOUT = 120_000 // 2 min per piece
-
 // ─── LLM call helper ─────────────────────────────────────────────────────────
 
-async function callLLM(prompt: string): Promise<string> {
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), LLM_TIMEOUT)
-
-  try {
-    const resp = await fetch(`${OLLAMA_URL}/api/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: OLLAMA_MODEL, prompt, stream: false }),
-      signal: controller.signal,
-    })
-    if (!resp.ok) throw new Error(`Ollama HTTP ${resp.status}`)
-    const data = await resp.json()
-    return (data.response || '').trim()
-  } finally {
-    clearTimeout(timer)
-  }
+async function callLLM(prompt: string, size: 'large' | 'small' = 'small'): Promise<string> {
+  return callMistral(prompt, size)
 }
 
 // ─── 1. Bridge Page ───────────────────────────────────────────────────────────
@@ -150,7 +132,7 @@ FAQ QUESTIONS: ${(brief.faqQuestions || []).slice(0, 4).join(' | ')}
 Write the bridge page HTML now:`
 
   try {
-    const html = await callLLM(prompt)
+    const html = await callLLM(prompt, 'large')
     return html || bridgePageFallback(brief, offer)
   } catch {
     return bridgePageFallback(brief, offer)
@@ -209,7 +191,7 @@ AFFILIATE LINK: ${offer.hoplink}
 Write the full article now:`
 
   try {
-    const text = await callLLM(prompt)
+    const text = await callLLM(prompt, 'large')
     return text || articleFallback(brief, offer, platform)
   } catch {
     return articleFallback(brief, offer, platform)
@@ -221,25 +203,41 @@ Write the full article now:`
 function pinterestFallback(brief: ContentBrief, offer: OfferContext): string {
   const { primaryKeyword } = brief
   const { productName, benefits } = offer
+  const tag = primaryKeyword.replace(/\s+/g, '')
 
-  const captions = [
-    `🔥 Struggling with ${primaryKeyword}? This changes everything. Save this pin! #${primaryKeyword.replace(/\s+/g, '')}`,
-    `✅ ${benefits[0] || 'Real results'} — the ${primaryKeyword} guide no one talks about. Link in bio 👇`,
-    `The #1 mistake people make with ${primaryKeyword} (and how ${productName} fixes it) 💡 #tips`,
-    `Stop wasting time on methods that don't work. Here's what actually delivers with ${primaryKeyword} 👇`,
-    `📌 Save this: Complete ${primaryKeyword} breakdown — everything you need in one place. ${productName} inside.`,
+  const pins = [
+    {
+      title: `The ${primaryKeyword} Guide That Actually Works`,
+      description: `Struggling with ${primaryKeyword}? ${benefits[0] || 'Real results'} — discover the system no one talks about. Save this pin!`,
+      hashtags: [tag, 'affiliateTips', 'onlineIncome'],
+    },
+    {
+      title: `#1 Mistake With ${primaryKeyword} (And How to Fix It)`,
+      description: `Most people skip this step with ${primaryKeyword}. ${productName} shows you exactly what works. Link in bio.`,
+      hashtags: [tag, productName.replace(/\s+/g, ''), 'tips'],
+    },
+    {
+      title: `${primaryKeyword} — Complete Breakdown`,
+      description: `Everything you need to know about ${primaryKeyword} in one place. Save for later and share with anyone who needs this!`,
+      hashtags: [tag, 'learnOnline', 'saveForLater'],
+    },
   ]
-  return JSON.stringify(captions, null, 2)
+  return JSON.stringify(pins, null, 2)
 }
 
 async function generatePinterestCaptions(brief: ContentBrief, offer: OfferContext): Promise<string> {
-  const prompt = `Write exactly 5 Pinterest captions for an affiliate marketing pin about: ${brief.primaryKeyword}
+  const prompt = `Create exactly 3 Pinterest pin objects for an affiliate marketing campaign about: ${brief.primaryKeyword}
 
 Product: ${offer.productName}
 Niche: ${offer.niche}
+Benefits: ${offer.benefits.slice(0, 3).join(', ')}
 
-Rules: each caption max 125 chars, include 1-2 relevant hashtags, end with a hook or call-to-action, no URLs.
-Return a JSON array of 5 strings only.`
+Rules:
+- title: 40-60 chars, benefit-driven, no clickbait
+- description: 100-150 chars, includes keyword naturally, ends with a call-to-action or hook
+- hashtags: array of 3-4 strings (no # prefix, no spaces in tags)
+
+Return a JSON array of 3 objects: [{"title": "...", "description": "...", "hashtags": ["..."]}, ...]`
 
   try {
     const raw = await callLLM(prompt)
@@ -443,7 +441,7 @@ Write in complete HTML with inline CSS. Professional, clean design. Content shou
 Mandatory entities to include naturally: ${brief.mandatoryEntities.join(', ')}`
 
   try {
-    const html = await callLLM(prompt)
+    const html = await callLLM(prompt, 'large')
     if (html.includes('<html') || html.includes('<body')) return html
     return leadMagnetFallback(brief, offer)
   } catch {

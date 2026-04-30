@@ -1,10 +1,11 @@
 /**
  * LLM Extractor
- * Sends scraped page data to Ollama (local Llama 3) to extract
+ * Sends scraped page data to Mistral via OpenRouter to extract
  * structured offer details: product name, niche, price, commission, benefits, etc.
  */
 
 import type { ScrapedPage } from './offer-scraper'
+import { callMistral } from './mistral'
 
 export interface OfferExtraction {
   productName: string
@@ -22,9 +23,6 @@ export interface OfferExtraction {
   confidence: number
 }
 
-const OLLAMA_URL = process.env.OLLAMA_BASE_URL || 'http://ollama:11434'
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3.3:70b'
-
 const EXTRACTION_PROMPT = (page: ScrapedPage) => `
 You are an expert affiliate marketer analyzing a product sales page.
 Extract structured data from the following page content and return ONLY valid JSON.
@@ -41,7 +39,7 @@ ${page.bodyText.slice(0, 2000)}
 Return ONLY this JSON structure (no markdown, no explanation):
 {
   "productName": "exact product name",
-  "niche": "one of: health, wealth, relationships, software, survival, other",
+  "niche": "one of: health, wealth, relationships, software, survival, woodworking, fishing, gardening, bird_watching, knitting, model_trains, astronomy, aquarium, beekeeping, hiking, photography, chess, other",
   "pricePoint": <number or null>,
   "commissionPct": <number 0-100 or null>,
   "commissionFixed": <number or null>,
@@ -57,44 +55,26 @@ Return ONLY this JSON structure (no markdown, no explanation):
 `.trim()
 
 /**
- * Extract offer details using local Ollama LLM
- * Falls back to rule-based extraction if Ollama is unavailable
+ * Extract offer details using Mistral via OpenRouter.
+ * Falls back to rule-based extraction if the API is unavailable.
  */
 export async function extractOfferDetails(page: ScrapedPage): Promise<OfferExtraction> {
   try {
-    const extraction = await queryOllama(page)
+    const extraction = await queryMistral(page)
     if (extraction) return extraction
   } catch (err) {
-    console.warn('[llm-extractor] Ollama failed, using fallback extraction:', err)
+    console.warn('[llm-extractor] Mistral failed, using fallback extraction:', err)
   }
 
   return fallbackExtraction(page)
 }
 
-async function queryOllama(page: ScrapedPage): Promise<OfferExtraction | null> {
-  const resp = await fetch(`${OLLAMA_URL}/api/generate`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: OLLAMA_MODEL,
-      prompt: EXTRACTION_PROMPT(page),
-      stream: false,
-      options: {
-        temperature: 0.1,
-        num_predict: 800,
-      },
-    }),
-    signal: AbortSignal.timeout(120000), // LLM can be slow
-  })
-
-  if (!resp.ok) throw new Error(`Ollama HTTP ${resp.status}`)
-
-  const data = await resp.json()
-  const rawText: string = data.response || ''
+async function queryMistral(page: ScrapedPage): Promise<OfferExtraction | null> {
+  const rawText = await callMistral(EXTRACTION_PROMPT(page), 'small', 0.1)
 
   // Extract JSON from the response (LLM sometimes adds preamble)
   const jsonMatch = rawText.match(/\{[\s\S]*\}/)
-  if (!jsonMatch) throw new Error('No JSON found in LLM response')
+  if (!jsonMatch) throw new Error('No JSON found in Mistral response')
 
   const parsed = JSON.parse(jsonMatch[0]) as OfferExtraction
   return parsed
@@ -133,16 +113,40 @@ function fallbackExtraction(page: ScrapedPage): OfferExtraction {
   }
 }
 
-function detectNiche(text: string): string {
-  const niches: Record<string, string[]> = {
+// Canonical niche identifiers — used by detectNiche() and offer-pipeline normalization
+export const CANONICAL_NICHES = [
+  'health', 'wealth', 'relationships', 'software', 'survival',
+  'woodworking', 'fishing', 'gardening', 'bird_watching', 'knitting',
+  'model_trains', 'astronomy', 'aquarium', 'beekeeping', 'hiking',
+  'photography', 'chess',
+] as const
+
+export type CanonicalNiche = typeof CANONICAL_NICHES[number] | 'other'
+
+function detectNiche(text: string): CanonicalNiche {
+  const niches: Record<CanonicalNiche, string[]> = {
     health: ['weight loss', 'diet', 'fat burn', 'health', 'fitness', 'muscle', 'keto', 'diabetes', 'blood sugar'],
     wealth: ['make money', 'income', 'affiliate', 'trading', 'invest', 'crypto', 'forex', 'online business', 'passive income'],
     relationships: ['dating', 'relationship', 'marriage', 'love', 'attraction', 'ex back', 'romance'],
     software: ['software', 'app', 'tool', 'saas', 'plugin', 'automation', 'ai tool', 'productivity'],
     survival: ['survival', 'prepper', 'emergency', 'bug out', 'self defense', 'homestead'],
+    woodworking: ['woodworking', 'wood project', 'woodcraft', 'carpentry', 'wood plans', 'lumber', 'joinery', 'cabinet making'],
+    fishing: ['fishing', 'bass fishing', 'fly fishing', 'tackle', 'angling', 'lure', 'fish finder', 'rod and reel'],
+    gardening: ['gardening', 'vegetable garden', 'raised bed', 'composting', 'grow your own', 'organic garden', 'seed starting'],
+    bird_watching: ['bird watching', 'birding', 'binoculars', 'bird feeder', 'ornithology', 'bird identification', 'backyard birds'],
+    knitting: ['knitting', 'crochet', 'yarn', 'knit pattern', 'crocheting', 'wool', 'needle craft', 'amigurumi'],
+    model_trains: ['model train', 'model railroad', 'rc car', 'remote control', 'ho scale', 'n scale', 'slot car', 'model kit'],
+    astronomy: ['astronomy', 'telescope', 'stargazing', 'astrophotography', 'planet', 'constellation', 'lunar', 'deep sky'],
+    aquarium: ['aquarium', 'fish tank', 'reef tank', 'tropical fish', 'fishkeeping', 'planted tank', 'cichlid', 'saltwater tank'],
+    beekeeping: ['beekeeping', 'beekeeper', 'honey bee', 'hive', 'apiary', 'queen bee', 'bee colony', 'honey harvest'],
+    hiking: ['hiking', 'backpacking', 'trail', 'camping', 'wilderness', 'trekking', 'tent', 'outdoor gear', 'national park'],
+    photography: ['photography', 'photo editing', 'lightroom', 'camera settings', 'portrait photography', 'landscape photo', 'photoshop'],
+    chess: ['chess', 'chess opening', 'chess strategy', 'board game', 'chess puzzle', 'endgame', 'chess tactics'],
+    other: [],
   }
 
-  for (const [niche, keywords] of Object.entries(niches)) {
+  for (const [niche, keywords] of Object.entries(niches) as [CanonicalNiche, string[]][]) {
+    if (niche === 'other') continue
     if (keywords.some(kw => text.includes(kw))) return niche
   }
   return 'other'

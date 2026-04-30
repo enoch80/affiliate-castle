@@ -22,15 +22,13 @@ import { prisma } from '@/lib/prisma'
 // ---------------------------------------------------------------------------
 
 function jaccardSimilarity(a: string, b: string): number {
-  const setA = new Set(
-    a.toLowerCase().split(/\s+/).filter((w) => w.length > 3),
-  )
-  const setB = new Set(
-    b.toLowerCase().split(/\s+/).filter((w) => w.length > 3),
-  )
-  const intersection = new Set([...setA].filter((x) => setB.has(x)))
-  const union = new Set([...setA, ...setB])
-  return union.size === 0 ? 0 : intersection.size / union.size
+  const wordsA = a.toLowerCase().split(/\s+/).filter((w) => w.length > 3)
+  const wordsB = b.toLowerCase().split(/\s+/).filter((w) => w.length > 3)
+  const setA = new Set(wordsA)
+  const setB = new Set(wordsB)
+  const intersectionSize = wordsA.filter((x) => setB.has(x)).length
+  const unionSize = new Set(wordsA.concat(wordsB)).size
+  return unionSize === 0 ? 0 : intersectionSize / unionSize
 }
 
 // ---------------------------------------------------------------------------

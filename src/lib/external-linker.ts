@@ -130,13 +130,9 @@ const GENERIC_SOURCES: AuthoritySource[] = [
 // ---------------------------------------------------------------------------
 
 function wordOverlap(a: string, b: string): number {
-  const wordsA = new Set(a.toLowerCase().split(/\s+/).filter((w) => w.length > 3))
+  const wordsA = a.toLowerCase().split(/\s+/).filter((w) => w.length > 3)
   const wordsB = new Set(b.toLowerCase().split(/\s+/).filter((w) => w.length > 3))
-  let overlap = 0
-  for (const w of wordsA) {
-    if (wordsB.has(w)) overlap++
-  }
-  return overlap
+  return wordsA.reduce((sum, w) => sum + (wordsB.has(w) ? 1 : 0), 0)
 }
 
 // ---------------------------------------------------------------------------

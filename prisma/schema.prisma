@@ -49,6 +49,18 @@ model KeywordResearch {
   semanticGap         Json?
   avgWordCount        Int?
   targetWordCount     Int?
+  // Migration 2 — Sprint B PAA / related searches
+  paaQuestions        Json?
+  relatedSearches     Json?
+  searchIntent        String?
+  difficultyLevel     String?
+  pinterestKeywords   Json?
+  // Migration 2.5 — Sprint B KGR fields
+  kgrScore            Float?
+  kgrTier             String?
+  allintitleCount     Int?
+  estimatedVolume     Int?
+  kgrCandidates       Json?
   createdAt           DateTime  @default(now())
 }
 
@@ -59,6 +71,7 @@ model Campaign {
   name            String
   angle           String?
   status          String    @default("draft")
+  nicheSlug       String?
   totalClicks     Int       @default(0)
   totalConversions Int      @default(0)
   totalRevenue    Float     @default(0)

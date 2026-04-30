@@ -563,6 +563,53 @@
         "Pre-existing TS errors: 13 implicit any in cron/aggregate-analytics/route.ts — pre-date mobile work",
         "Screenshots were deleted after verification per user request"
       ]
+    },
+    {
+      "@type": "QAEntry",
+      "sprint": "Platform OAuth Connect",
+      "date": "2026-04-27",
+      "commit": "295f4ab",
+      "status": "implemented",
+      "description": "One-click OAuth popup connect flow for all 6 publishing platforms",
+      "components": [
+        "src/lib/platform-registry.ts",
+        "src/app/api/auth/oauth/start/route.ts",
+        "src/app/api/auth/oauth/callback/route.ts",
+        "src/app/api/auth/oauth/refresh/route.ts",
+        "src/app/api/settings/verify/route.ts",
+        "src/app/(dashboard)/dashboard/settings/page.tsx",
+        "prisma/migrations/20260427000000_platform_token_expires/migration.sql"
+      ],
+      "authTypes": {
+        "manual_token": ["devto", "hashnode", "medium"],
+        "oauth2": ["blogger (Google PKCE)", "pinterest"],
+        "oauth1": ["tumblr"]
+      },
+      "newRoutes": [
+        "GET  /api/auth/oauth/start?platform=X  — generates state JWT + PKCE, returns popup URL",
+        "GET  /api/auth/oauth/callback           — exchanges code/verifier, upserts PlatformAccount, postMessage + close",
+        "POST /api/auth/oauth/refresh            — silent token refresh using stored refresh_token"
+      ],
+      "securityNotes": [
+        "CSRF: HMAC-SHA256 signed JWT state in HTTP-only cookie (10 min TTL)",
+        "PKCE: SHA-256 code challenge for Blogger/Google, stored in oauth_pkce cookie",
+        "OAuth1 Tumblr: server-side HMAC-SHA1 request_token; secret in oauth_tmp_secret cookie",
+        "Auto-refresh: verify GET catches TOKEN_EXPIRED, calls /api/auth/oauth/refresh, retries"
+      ],
+      "dbMigration": "ALTER TABLE PlatformAccount ADD COLUMN tokenExpiresAt TIMESTAMP(3) — applied directly via psql",
+      "deployment": "docker compose build app + up -d --force-recreate; health OK",
+      "evidence": "curl http://localhost:3200/api/health → {status:ok}; all 3 OAuth routes return 401 Unauthorized (correct — require auth session)",
+      "requiredEnvVars": [
+        "GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET",
+        "PINTEREST_CLIENT_ID / PINTEREST_CLIENT_SECRET",
+        "TUMBLR_CONSUMER_KEY / TUMBLR_CONSUMER_SECRET"
+      ],
+      "notes": [
+        "Google/Pinterest/Tumblr OAuth credentials not yet set in production .env — platforms will show 'missing client credentials' error until added",
+        "Blogger/Google OAuth requires redirect URI registered in Google Cloud Console: https://app.digitalfinds.net/api/auth/oauth/callback",
+        "Pinterest requires redirect URI: https://app.digitalfinds.net/api/auth/oauth/callback",
+        "Tumblr OAuth1 requires callback URL in Tumblr app settings: https://app.digitalfinds.net/api/auth/oauth/callback"
+      ]
     }
   ]
 }

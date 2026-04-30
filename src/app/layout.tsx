@@ -11,6 +11,11 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: 'black-translucent',
   },
+  verification: {
+    other: {
+      'msvalidate.01': '9A867347017735249C1189FABFA4958C',
+    },
+  },
 }
 
 export const viewport: Viewport = {

@@ -463,32 +463,36 @@ export default async function CampaignDetailPage({ params }: { params: { id: str
       )}
 
       {/* KGR Badge */}
-      {(keywordData as Record<string, unknown> | null | undefined)?.kgrTier && (
-        <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 mb-6">
-          <h2 className="text-lg font-bold text-white mb-3">KGR Keyword Score</h2>
-          <div className="flex flex-wrap items-center gap-3">
-            <span className={`text-sm px-3 py-1 rounded-full border font-semibold ${
-              (keywordData as Record<string, unknown>).kgrTier === 'golden'
-                ? 'bg-yellow-100 text-yellow-800 border-yellow-300'
-                : (keywordData as Record<string, unknown>).kgrTier === 'silver'
-                ? 'bg-gray-100 text-gray-700 border-gray-300'
-                : (keywordData as Record<string, unknown>).kgrTier === 'bronze'
-                ? 'bg-orange-100 text-orange-700 border-orange-300'
-                : 'bg-red-100 text-red-700 border-red-300'
-            }`}>
-              KGR {((keywordData as Record<string, unknown>).kgrScore as number | null)?.toFixed(2)} ({(keywordData as Record<string, unknown>).kgrTier as string})
-              {(keywordData as Record<string, unknown>).estimatedVolume && (
-                <> · ~{(((keywordData as Record<string, unknown>).estimatedVolume as number) * 8).toLocaleString()}/mo reach</>
-              )}
-            </span>
-            {(keywordData as Record<string, unknown>).searchIntent && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-slate-700 text-slate-300 border border-slate-600">
-                intent: {(keywordData as Record<string, unknown>).searchIntent as string}
+      {(() => {
+        const kd = keywordData as { kgrTier?: string; kgrScore?: number; estimatedVolume?: number; searchIntent?: string } | null | undefined
+        if (!kd?.kgrTier) return null
+        const tierClass =
+          kd.kgrTier === 'golden'
+            ? 'bg-yellow-100 text-yellow-800 border-yellow-300'
+            : kd.kgrTier === 'silver'
+            ? 'bg-gray-100 text-gray-700 border-gray-300'
+            : kd.kgrTier === 'bronze'
+            ? 'bg-orange-100 text-orange-700 border-orange-300'
+            : 'bg-red-100 text-red-700 border-red-300'
+        return (
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 mb-6">
+            <h2 className="text-lg font-bold text-white mb-3">KGR Keyword Score</h2>
+            <div className="flex flex-wrap items-center gap-3">
+              <span className={`text-sm px-3 py-1 rounded-full border font-semibold ${tierClass}`}>
+                KGR {kd.kgrScore?.toFixed(2)} ({kd.kgrTier})
+                {kd.estimatedVolume && (
+                  <> · ~{(kd.estimatedVolume * 8).toLocaleString()}/mo reach</>
+                )}
               </span>
-            )}
+              {kd.searchIntent && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-slate-700 text-slate-300 border border-slate-600">
+                  intent: {kd.searchIntent}
+                </span>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {/* Campaign angle */}
       {campaign.angle && (
